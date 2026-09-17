@@ -3,10 +3,11 @@
 The package exports plain JavaScript helpers with TypeScript declarations:
 
 ```js
-import { initialize, configureEnvironment, resources, piCli, piwCli } from 'pi-experiment-ops';
-initialize(workspace, agentDirectory);
-configureEnvironment(workspace, { dataDirectory, agentDirectory });
-const paths = resources({ terminal: '/absolute/path/to/terminal-wrapper.ts' });
+import { initialize, configureEnvironment, workspacePaths, resources, piCli, piwCli } from 'pi-experiment-ops';
+const paths = workspacePaths(workspace);
+initialize(workspace);
+configureEnvironment(workspace);
+const resourcePaths = resources({ terminal: '/absolute/path/to/terminal-wrapper.ts' });
 ```
 
 `resources()` returns absolute `extensions` and `skills` arrays for Pi's `DefaultResourceLoader` or CLI flags. Extension keys are `policy`, `mcp`, `terminal`, `subagents`, `processes`, `modes`, `archive`, and `graph`. Replacements occupy the original entry; no duplicate extension is loaded. Unknown keys fail. Applications should disable automatic extension/skill discovery when using this explicit list.
@@ -25,6 +26,8 @@ Pi-loaded TypeScript entrypoints re-export the pinned public upstream APIs neede
 | `pi-experiment-ops/shell` | Native interactive-shell extension factory |
 | `pi-experiment-ops/archive` | Archive extension and SQLite sync helpers |
 
-These entrypoints are for Pi's extension loader, which supplies upstream compatibility aliases. Applications using the Pi SDK directly should pin the same Pi version as this bundle, allowing npm to deduplicate the host runtime. This contract owns resource discovery and upstream versions; consumers own network APIs, frontend events, browser decisions, child observers, and application metadata.
+These entrypoints are for Pi's extension loader, which supplies upstream compatibility aliases. Applications can import Pi's native SDK through `pi-experiment-ops/sdk`. This subpath re-exports the installed `@earendil-works/pi-coding-agent` API and types unchanged; importing it performs no workspace setup. Consumers using this entrypoint need only declare `pi-experiment-ops` as their Pi dependency. `piCli` and the SDK export resolve the same installed Pi package. This contract owns resource discovery and upstream versions; consumers own network APIs, frontend events, browser decisions, child observers, and application metadata.
 
 The bundle carries upstream community resources using `bundledDependencies`. Release tarballs can be installed without a checkout. Consumers may vendor a versioned tarball until a registry release is available; they should include it in their package files and lock its integrity in their shrinkwrap. Neither a sibling directory dependency nor a workspace symlink is required.
+
+`workspacePaths(workspace)` resolves the default `dataDirectory`, `agentDirectory`, and `sessionDirectory` without creating files or changing environment variables. The paths retain the native Pi workspace encoding and existing experiment-ops layout. Use `settings.json`, `models.json`, and `auth.json` in `agentDirectory` directly; native session files live in `sessionDirectory`. Frontend presentation state belongs in a separate frontend-owned directory.

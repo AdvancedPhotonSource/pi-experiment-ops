@@ -6,3 +6,8 @@ export type ExtensionName = 'policy' | 'mcp' | 'terminal' | 'subagents' | 'proce
 export function resources(replacements?: Partial<Record<ExtensionName, string>>): { extensions: string[]; skills: string[] };
 export function initialize(workspace: string, agentDirectory?: string): string;
 export function configureEnvironment(workspace: string, options?: { dataDirectory?: string; agentDirectory?: string }): void;
+export function workspacePaths(workspace: string): {
+  dataDirectory: string;
+  agentDirectory: string;
+  sessionDirectory: string;
+};

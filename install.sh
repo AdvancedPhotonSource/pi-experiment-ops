@@ -7,7 +7,7 @@ usage() {
 Usage: sh install.sh [options]
   --source DIR          Developer install of a local checkout (edits stay live)
   --repo OWNER/REPO     GitHub repository hosting release assets
-  --version VERSION     Release version (default 0.1.1)
+  --version VERSION     Release version (default 0.2.0)
   --archive FILE        Install a downloaded release tarball instead
   --prefix DIR          Installation directory (default ~/.local/share/pi-experiment-ops)
   --bin-dir DIR         Launcher directory (default ~/.local/bin)
@@ -25,7 +25,7 @@ No sudo is used. Shell startup files are left intact.
 HELP
 }
 source_dir= repo= archive= preset= model= argo_user= base_url= provider= api_key_env=
-version=0.1.1
+version=0.2.0
 prefix=${XDG_DATA_HOME:-"$HOME/.local/share"}/pi-experiment-ops
 bin_dir=$HOME/.local/bin
 workspace=$HOME/pi-experiment-workspace
