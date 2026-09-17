@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+import { spawn } from 'node:child_process';
+import { piCli } from '../lib/index.mjs';
+const child = spawn(process.execPath, [piCli, ...process.argv.slice(2)], { stdio: 'inherit' });
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => child.kill(signal));
+child.on('error', error => { console.error(error.message); process.exitCode = 1; });
+child.on('exit', (code, signal) => { process.exitCode = code ?? (signal === 'SIGINT' ? 130 : 143); });
