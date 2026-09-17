@@ -1,0 +1,10 @@
+{
+  "policy": "extensions/policy.ts",
+  "mcp": "extensions/mcp.ts",
+  "terminal": "node_modules/pi-interactive-shell/index.ts",
+  "subagents": "node_modules/pi-subagents/index.ts",
+  "processes": "node_modules/@aliou/pi-processes/extensions/processes/index.ts",
+  "modes": "node_modules/pi-agent-modes/extensions/index.ts",
+  "archive": "extensions/archive.ts",
+  "graph": "node_modules/@ali-abassi/piw/extensions/pi-graph.ts"
+}

@@ -1,0 +1,84 @@
+{
+  "name": "pi-experiment-ops",
+  "version": "0.1.1",
+  "description": "A standalone Pi distribution for experiment operations, MCP instruments and graph workflows",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "bin": {
+    "pi-experiment-ops": "bin/pi-experiment-ops.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "extensions",
+    "examples",
+    "scripts",
+    "requirements.lock",
+    "npm-shrinkwrap.json",
+    "README.md",
+    "THIRD_PARTY.md",
+    "docs",
+    "install.sh"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.mjs"
+    },
+    "./mcp": "./lib/mcp.ts",
+    "./mcp-types": "./lib/mcp-types.ts",
+    "./subagents": "./lib/subagents.ts",
+    "./shell": "./lib/shell.ts",
+    "./archive": "./lib/archive.ts"
+  },
+  "keywords": [
+    "pi-package"
+  ],
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.85.1",
+    "@earendil-works/pi-agent-core": "0.85.1",
+    "@earendil-works/pi-ai": "0.85.1",
+    "@earendil-works/pi-tui": "0.85.1",
+    "typebox": "1.3.7",
+    "pi-mcp-adapter": "2.34.0",
+    "pi-subagents": "0.68.0",
+    "@aliou/pi-processes": "0.12.0",
+    "pi-interactive-shell": "0.15.2",
+    "pi-agent-modes": "0.3.0",
+    "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
+    "@gordonb/pi-archive": "git+https://github.com/gordonbrander/pi-archive.git#4030631e21608f549033b9d291dbf0d76578245a"
+  },
+  "bundledDependencies": [
+    "pi-mcp-adapter",
+    "pi-subagents",
+    "@aliou/pi-processes",
+    "pi-interactive-shell",
+    "pi-agent-modes",
+    "@ali-abassi/piw",
+    "@gordonb/pi-archive"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:package": "node scripts/package-test.mjs",
+    "test:bootstrap": "node scripts/bootstrap-test.mjs"
+  },
+  "pi": {
+    "extensions": [
+      "extensions/policy.ts",
+      "extensions/mcp.ts",
+      "node_modules/pi-interactive-shell/index.ts",
+      "node_modules/pi-subagents/index.ts",
+      "node_modules/@aliou/pi-processes/extensions/processes/index.ts",
+      "node_modules/pi-agent-modes/extensions/index.ts",
+      "extensions/archive.ts",
+      "node_modules/@ali-abassi/piw/extensions/pi-graph.ts"
+    ],
+    "skills": [
+      "node_modules/@aliou/pi-processes/skills",
+      "node_modules/pi-interactive-shell/skills",
+      "node_modules/@ali-abassi/piw/SKILL.md"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+version: 1
+workflow: toy-dataset-review
+model: local-test/toy
+thinking: "off"
+workers: 1
+input:
+  required: true
+  description: A short description of a toy dataset
+steps:
+  - id: generate
+    needs: []
+    agent: true
+    tools: read
+    retries: 0
+    timeout: 30
+    prompt: |
+      PI_OPS_TOY_GENERATE
+      Describe a toy dataset for: {input}
+      Return only JSON with a title and values (an array of three numbers).
+      Do not execute tools. Your response is saved by the runner.
+    gate: python3 ./check.py dataset "$OUT"
+  - id: review
+    needs: [generate]
+    agent: true
+    tools: read
+    retries: 0
+    timeout: 30
+    prompt: |
+      PI_OPS_TOY_REVIEW
+      Review this dataset: {step.generate}
+      Requirements: {input}
+      Return only JSON with approved (boolean) and reason (string).
+    gate: python3 ./check.py review "$OUT"
+  - id: render
+    needs: [review]
+    retries: 0
+    timeout: 30
+    cmd: python3 ./render.py "$RUN" "$PI_GRAPH_INPUT"
+    gate: python3 ./check.py receipt "$RUN/receipt.json"

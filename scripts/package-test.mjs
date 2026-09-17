@@ -1,0 +1,18 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, cpSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import assert from 'node:assert/strict';
+const source = new URL('..', import.meta.url).pathname;
+const target = mkdtempSync(join(tmpdir(), 'pi-ops-package-'));
+const run = (bin, args, cwd = target, env = process.env) => execFileSync(bin, args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 16 * 1024 * 1024 });
+const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', target], source))[0];
+assert.ok(packed.bundled.includes('pi-subagents'));
+assert.ok(packed.files.every(file => !/^(webui|public|dist\/webui)\//.test(file.path)));
+run('npm', ['install', '--prefix', target, '--omit=dev', '--legacy-peer-deps', '--no-audit', '--no-fund', join(target, packed.filename)]);
+const root = join(target, 'node_modules/pi-experiment-ops');
+assert.ok(existsSync(join(root, 'requirements.lock')));
+for (let i = 0; i < 2; i++) run('bash', [join(root, 'scripts/install.sh'), join(target, 'workspace')]);
+cpSync(join(source, 'tests/bundle.test.mjs'), join(target, 'bundle.test.mjs'));
+console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
+console.log(`Standalone tarball installation and real Pi/graph passed in ${target}`);

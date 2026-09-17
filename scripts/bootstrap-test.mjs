@@ -1,0 +1,43 @@
+// Exercise the real piped installer with no Node/uv on PATH and isolated user data.
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, cpSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import assert from 'node:assert/strict';
+const source = new URL('..', import.meta.url).pathname;
+const target = mkdtempSync(join(tmpdir(), 'pi-ops-bootstrap-'));
+const home = join(target, 'home'); mkdirSync(home);
+const profile = join(home, '.profile'); writeFileSync(profile, '# untouched\n');
+const env = { ...process.env, HOME: home, PATH: '/usr/bin:/bin', XDG_DATA_HOME: join(home, '.local/share'), XDG_CACHE_HOME: join(home, '.cache'), npm_config_cache: join(home, '.npm') };
+for (const key of ['PI_CODING_AGENT_DIR', 'PI_GRAPH_PYTHON', 'UV_PYTHON_INSTALL_DIR', 'UV_INSTALL_DIR', 'UV_UNMANAGED_INSTALL']) delete env[key];
+assert.notEqual(spawnSync('node', ['--version'], { env }).status, 0, 'Test requires a PATH without Node');
+const packed = JSON.parse(execFileSync('npm', ['pack', '--json', '--pack-destination', target], { cwd: source, encoding: 'utf8' }))[0];
+const archive = join(target, packed.filename);
+const workspace = join(home, "workspace with spaces ' quoted");
+const args = ['-s', '--', '--archive', archive, '--workspace', workspace, '--preset', 'argo', '--argo-user', 'test-user', '--model', 'GPT-4.1'];
+for (let i = 0; i < 2; i++) {
+  const result = spawnSync('sh', args, { input: readFileSync(join(source, 'install.sh')), cwd: target, env, encoding: 'utf8', timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+}
+const launcher = join(home, '.local/bin/pi-experiment-ops');
+const doctor = spawnSync(launcher, ['doctor'], { env, encoding: 'utf8' });
+assert.equal(doctor.status, 0, doctor.stderr + doctor.stdout);
+assert.equal(JSON.parse(doctor.stdout).workspace, workspace);
+const alternate = join(home, 'alternate');
+assert.equal(spawnSync(launcher, ['init', '--workspace', alternate], { env }).status, 0);
+assert.ok(existsSync(join(alternate, '.pi-experiment-ops/agent/settings.json')));
+assert.equal(readFileSync(profile, 'utf8'), '# untouched\n');
+assert.equal(existsSync(join(home, '.pi/agent')), false);
+const config = JSON.parse(readFileSync(join(workspace, '.pi-experiment-ops/agent/models.json')));
+assert.equal(config.providers.argo.models[0].samplingParams.user, 'test-user');
+const bad = spawnSync('sh', ['-s', '--', '--archive', archive, '--preset', 'argo'], { input: readFileSync(join(source, 'install.sh')), env, encoding: 'utf8' });
+assert.notEqual(bad.status, 0);
+assert.match(bad.stderr, /--model is required/);
+const checkout = join(target, 'developer checkout'); mkdirSync(checkout);
+for (const entry of ['package.json', 'npm-shrinkwrap.json', 'requirements.lock', '.npmrc', 'lib', 'bin', 'extensions', 'examples', 'scripts', 'install.sh']) cpSync(join(source, entry), join(checkout, entry), { recursive: true });
+const development = spawnSync('sh', [join(source, 'install.sh'), '--source', checkout, '--workspace', alternate], { cwd: target, env, encoding: 'utf8', timeout: 180000, maxBuffer: 8 * 1024 * 1024 });
+assert.equal(development.status, 0, development.stdout + development.stderr);
+assert.ok(readFileSync(launcher, 'utf8').includes(checkout));
+assert.equal(spawnSync(launcher, ['doctor'], { env }).status, 0);
+console.log(`Developer checkout installation and launcher passed: ${checkout}`);
+console.log(`Piped installation, automatic Node/uv/Python provisioning, Argo configuration, quoting, rerun and workspace override passed: ${target}`);

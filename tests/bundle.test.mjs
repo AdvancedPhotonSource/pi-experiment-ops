@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+const root = resolve(process.env.PI_OPS_PACKAGE_ROOT || new URL('..', import.meta.url).pathname);
+const ops = await import(join(root, 'lib/index.mjs'));
+const run = (args, workspace) => new Promise((resolve, reject) => {
+  const child = spawn(process.execPath, [join(root, 'bin/pi-experiment-ops.mjs'), ...args], { cwd: workspace, env: { ...process.env, PATH: process.env.PATH.split(':').filter(path => !path.includes('node_modules/.bin')).join(':') }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '', err = '';
+  const timeout = setTimeout(() => { child.kill('SIGKILL'); reject(Error('Timed out: ' + err)); }, 90000);
+  child.stdout.on('data', chunk => out += chunk);
+  child.stderr.on('data', chunk => err += chunk);
+  child.on('error', error => { clearTimeout(timeout); reject(error); });
+  child.on('exit', code => { clearTimeout(timeout); resolve({ code, out, err }); });
+});
+test('isolated bundle resources, real Pi chat and real graph children', { timeout: 180000 }, async () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
+  ops.initialize(workspace);
+  assert.equal(ops.resources().extensions.length, 8);
+  assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 8);
+  assert.ok(ops.resources({ terminal: '/replacement.ts' }).extensions.includes('/replacement.ts'));
+  assert.throws(() => ops.resources({ typo: 'x' }), /Unknown extension/);
+  const settings = join(workspace, '.pi-experiment-ops/agent/settings.json');
+  writeFileSync(settings, '{"offline":true,"packages":[],"theme":"light"}');
+  ops.initialize(workspace);
+  assert.equal(JSON.parse(readFileSync(settings)).theme, 'light');
+  const requests = [];
+  const server = createServer(async (req, res) => {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const request = JSON.parse(Buffer.concat(chunks));
+    requests.push(request);
+    const prompt = JSON.stringify(request.messages);
+    const content = prompt.includes('PI_OPS_TOY_GENERATE') ? JSON.stringify({ title: 'Toy', values: [1, 2, 3] }) : prompt.includes('PI_OPS_TOY_REVIEW') ? JSON.stringify({ approved: !prompt.includes('reject-review'), reason: 'Fixture review' }) : 'Standalone Pi bundle works.';
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+    for (const [delta, finish_reason] of [[{ role: 'assistant', content }, null], [{}, 'stop']]) res.write('data: ' + JSON.stringify({ id: 'fixture', object: 'chat.completion.chunk', model: 'toy', choices: [{ index: 0, delta, finish_reason }] }) + '\n\n');
+    res.end('data: [DONE]\n\n');
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const agent = join(workspace, '.pi-experiment-ops/agent');
+  writeFileSync(join(agent, 'models.json'), JSON.stringify({ providers: { 'local-test': { baseUrl: `http://127.0.0.1:${server.address().port}/v1`, api: 'openai-completions', apiKey: 'fixture', models: [{ id: 'toy', name: 'Toy', input: ['text'], reasoning: false, contextWindow: 128000, maxTokens: 4096, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }] } } }));
+  try {
+    const chat = await run(['pi', '--', '-p', '--no-approve', '--model', 'local-test/toy', 'hello'], workspace);
+    assert.equal(chat.code, 0, chat.err);
+    assert.match(chat.out, /Standalone Pi bundle works/);
+    assert.doesNotMatch(chat.err, /Failed to load extension|Extension errors|dispose is not a function/i);
+    const tools = requests[0].tools.map(tool => tool.function.name);
+    for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
+    const graph = async input => {
+      const result = await run(['piw', '--', 'run', 'workflows/toy/steps.yaml', '--input', input, '--json', '--no-cache'], workspace);
+      return { ...result, summary: JSON.parse(result.out) };
+    };
+    const success = await graph('toy');
+    assert.equal(success.code, 0, success.err + success.out);
+    const receipt = join(success.summary.run_dir, 'receipt.json');
+    assert.equal(JSON.parse(readFileSync(receipt)).count, 1);
+    assert.equal(existsSync(join(success.summary.run_dir, 'chart.png')), true);
+    const rejected = await graph('reject-review');
+    assert.notEqual(rejected.code, 0);
+    assert.equal(existsSync(join(rejected.summary.run_dir, 'receipt.json')), false);
+    const failed = await graph('fail-command');
+    assert.notEqual(failed.code, 0);
+    writeFileSync(join(failed.summary.run_dir, 'allow-render'), '');
+    const resumed = await run(['piw', '--', 'resume', 'workflows/toy/steps.yaml', failed.summary.run_dir.split('/').at(-1), '--json'], workspace);
+    assert.equal(resumed.code, 0, resumed.err + resumed.out);
+    const completed = JSON.parse(readFileSync(join(failed.summary.run_dir, 'receipt.json')));
+    assert.equal(completed.count, 1);
+    assert.ok(requests.length >= 7);
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});

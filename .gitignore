@@ -1,0 +1,10 @@
+node_modules/
+.runtime/
+*.tgz
+*.tgz.sha256
+release-assets/
+.demo/
+__pycache__/
+.loglogin
+.npmrc
+AGENTS.md
