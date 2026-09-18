@@ -19,6 +19,7 @@ const run = (args, workspace) => new Promise((resolve, reject) => {
 test('isolated bundle resources, real Pi chat and real graph children', { timeout: 180000 }, async () => {
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
   ops.initialize(workspace);
+  assert.equal(JSON.parse(readFileSync(join(workspace, '.pi/mcp.json'))).settings.scriptMode, false);
   assert.equal(ops.resources().extensions.length, 9);
   assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 9);
   assert.ok(ops.resources({ terminal: '/replacement.ts' }).extensions.includes('/replacement.ts'));
@@ -49,6 +50,7 @@ test('isolated bundle resources, real Pi chat and real graph children', { timeou
     assert.doesNotMatch(chat.err, /Failed to load extension|Extension errors|dispose is not a function/i);
     const tools = requests[0].tools.map(tool => tool.function.name);
     for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive', 'codemode_execute', 'codemode_result']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
+    assert.equal(tools.includes('mcpScript'), false);
     const graph = async input => {
       const result = await run(['piw', '--', 'run', 'workflows/toy/steps.yaml', '--input', input, '--json', '--no-cache'], workspace);
       return { ...result, summary: JSON.parse(result.out) };

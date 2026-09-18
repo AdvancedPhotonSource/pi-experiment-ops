@@ -74,6 +74,7 @@ test('CodeMode releases the Pi agent loop during an ordinary 60-second MCP call'
   session.agent.toolExecution = 'sequential';
   assert.ok(session.getActiveToolNames().includes('codemode_execute'));
   assert.ok(session.getActiveToolNames().includes('sleeper_sleep'));
+  assert.equal(session.getActiveToolNames().includes('mcpScript'), false);
   assert.deepEqual(errors, []);
   const events = [];
   session.subscribe(event => { if (event.type === 'tool_execution_end') events.push({ ...event, at: Date.now() }); });
