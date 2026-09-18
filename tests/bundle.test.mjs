@@ -19,8 +19,8 @@ const run = (args, workspace) => new Promise((resolve, reject) => {
 test('isolated bundle resources, real Pi chat and real graph children', { timeout: 180000 }, async () => {
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
   ops.initialize(workspace);
-  assert.equal(ops.resources().extensions.length, 8);
-  assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 8);
+  assert.equal(ops.resources().extensions.length, 9);
+  assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 9);
   assert.ok(ops.resources({ terminal: '/replacement.ts' }).extensions.includes('/replacement.ts'));
   assert.throws(() => ops.resources({ typo: 'x' }), /Unknown extension/);
   const settings = join(workspace, '.pi-experiment-ops/agent/settings.json');
@@ -48,7 +48,7 @@ test('isolated bundle resources, real Pi chat and real graph children', { timeou
     assert.match(chat.out, /Standalone Pi bundle works/);
     assert.doesNotMatch(chat.err, /Failed to load extension|Extension errors|dispose is not a function/i);
     const tools = requests[0].tools.map(tool => tool.function.name);
-    for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
+    for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive', 'codemode_execute', 'codemode_result']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
     const graph = async input => {
       const result = await run(['piw', '--', 'run', 'workflows/toy/steps.yaml', '--input', input, '--json', '--no-cache'], workspace);
       return { ...result, summary: JSON.parse(result.out) };

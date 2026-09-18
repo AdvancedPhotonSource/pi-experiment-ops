@@ -6,6 +6,7 @@ Upstream sources are bundled unchanged with their license notices.
 |---|---|---|
 | Pi coding agent, agent core, AI and TUI | `0.85.1` | [Pi](https://pi.dev/) |
 | MCP adapter | `2.34.0` | [nicobailon/pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) |
+| CodeMode | `@ian-pascoe/pi-codemode@0.7.4` | [ian-pascoe/pi-extensions](https://github.com/ian-pascoe/pi-extensions/tree/main/packages/pi-codemode) |
 | Subagents | `0.68.0` | [nicobailon/pi-subagents](https://github.com/nicobailon/pi-subagents) |
 | Processes | `@aliou/pi-processes@0.12.0` | [aliou/pi-processes](https://github.com/aliou/pi-processes) |
 | Interactive shell | `0.15.2` | [nicobailon/pi-interactive-shell](https://github.com/nicobailon/pi-interactive-shell) |

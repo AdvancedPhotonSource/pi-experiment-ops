@@ -1,6 +1,6 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A standalone Pi distribution for experiment operations, MCP instruments and graph workflows",
   "type": "module",
   "engines": {
@@ -52,7 +52,8 @@
     "pi-interactive-shell": "0.15.2",
     "pi-agent-modes": "0.3.0",
     "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
-    "@gordonb/pi-archive": "git+https://github.com/gordonbrander/pi-archive.git#4030631e21608f549033b9d291dbf0d76578245a"
+    "@gordonb/pi-archive": "git+https://github.com/gordonbrander/pi-archive.git#4030631e21608f549033b9d291dbf0d76578245a",
+    "@ian-pascoe/pi-codemode": "0.7.4"
   },
   "bundledDependencies": [
     "pi-mcp-adapter",
@@ -61,7 +62,8 @@
     "pi-interactive-shell",
     "pi-agent-modes",
     "@ali-abassi/piw",
-    "@gordonb/pi-archive"
+    "@gordonb/pi-archive",
+    "@ian-pascoe/pi-codemode"
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
@@ -77,12 +79,14 @@
       "node_modules/@aliou/pi-processes/extensions/processes/index.ts",
       "node_modules/pi-agent-modes/extensions/index.ts",
       "extensions/archive.ts",
-      "node_modules/@ali-abassi/piw/extensions/pi-graph.ts"
+      "node_modules/@ali-abassi/piw/extensions/pi-graph.ts",
+      "node_modules/@ian-pascoe/pi-codemode/src/index.ts"
     ],
     "skills": [
       "node_modules/@aliou/pi-processes/skills",
       "node_modules/pi-interactive-shell/skills",
-      "node_modules/@ali-abassi/piw/SKILL.md"
+      "node_modules/@ali-abassi/piw/SKILL.md",
+      "node_modules/@ian-pascoe/pi-codemode/skills"
     ]
   }
 }

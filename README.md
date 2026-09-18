@@ -1,6 +1,6 @@
 # pi-experiment-ops
 
-A standalone Pi package for experiment operations: MCP instruments, subagents, background processes, interactive terminals, agent modes, searchable SQLite transcripts, and pi-graph workflows. Upstream packages remain unchanged. The package runs through Pi's native terminal interface or its public SDK.
+A standalone Pi package for experiment operations: MCP instruments, background tool execution through CodeMode, subagents, background processes, interactive terminals, agent modes, searchable SQLite transcripts, and pi-graph workflows. Upstream packages remain unchanged. The package runs through Pi's native terminal interface or its public SDK.
 
 ## User installation: release package
 
@@ -63,6 +63,7 @@ node bin/pi-experiment-ops.mjs pi --workspace "$HOME/pi-experiment-workspace"
 - Provider configuration, credentials, modes, shell settings, and Pi sessions live under `<workspace>/.pi-experiment-ops/agent`. Startup preserves existing files. Choose a provider/model with Pi flags or Pi settings.
 - Pi owns agent execution and native session history. `/resume` restores conversations. A resumed transcript does not restart past processes or terminals.
 - Use `subagent` for delegated work, `process` for background commands, and `interactive_shell` for persistent terminals. These retain the upstream native terminal UI. Their skills describe controls and cancellation.
+- Use `codemode_execute` with `wait: false` to run registered Pi or MCP tools in a background TypeScript cell, then retrieve its result with `codemode_result({ sessionId })`. The MCP adapter supplies the MCP tools; CodeMode supplies execution and polling. The bundled CodeMode skill describes configuration and troubleshooting. Background calls retain the MCP server's configured request timeout; set `requestTimeoutMs` above the expected operation duration.
 - The archive indexes this workspace's agent sessions into `.pi/archive.db`; `search_archive` searches transcripts.
 - Agent modes provide plan/build behavior; plan defaults deny write tools, bash, and unknown tools. This is an execution policy, not a sandbox. Native agents run with your account's filesystem and network permissions.
 - Instrument servers must serialize conflicting physical operations until completion, including operations returning asynchronous job IDs. Sequential agent tools do not serialize separate agents.
@@ -79,6 +80,12 @@ pi-experiment-ops piw --workspace /absolute/workspace -- resume workflows/toy/st
 ```
 
 The example uses one worker, 30-second step limits, JSON gates, and an atomic completion receipt. Rejected review blocks rendering. `fail-command` in the input deliberately fails the renderer; create `allow-render` inside the run directory and resume. Completed steps are reused and the receipt prevents repeated completion writes. pi-graph is the sole runner. Its agent transcripts are governed by upstream child persistence behavior.
+
+## Background MCP acceptance test
+
+Run `node --test tests/codemode.test.mjs` to exercise a blocking MCP tool that sleeps for 60 seconds. A deterministic local model fixture drives the real Pi agent loop: launch a CodeMode cell with `wait: false`, read another file, confirm the cell is pending, then retrieve its completed result. The same test runs against the installed release in `npm run test:package`.
+
+For manual testing, `node tests/fixtures/sleep-mcp.mjs 8766` starts the test server at `http://127.0.0.1:8766/mcp` (8766 is the default port). Add that URL as a server named `sleeper` in the workspace's `.pi/mcp.json`, with `directTools: true`, `lifecycle: "eager"`, and `requestTimeoutMs: 90000`. In a persistent Pi session, ask the agent to run `return await tools.sleeper_sleep({});` through `codemode_execute` with `wait: false`, do independent work, and later retrieve the result with `codemode_result`.
 
 ## SDK consumers
 
