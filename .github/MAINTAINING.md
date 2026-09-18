@@ -30,7 +30,7 @@ The tests use a local streaming model endpoint, actual Pi extensions, and real p
 
 The workflow runs on `release: published`, including published prereleases. It validates versions, provisions dependencies, runs the checks above, and uploads assets with the automatic `GITHUB_TOKEN`. Actions policy must allow the pinned actions and `contents: write`. No npm publishing token or model credentials are required. Saving a draft or pushing a tag alone does not trigger the workflow.
 
-Use **Re-run failed jobs** for transient failures; reruns replace matching asset names. Publish a new version for source fixes. For manual recovery, run the checks above, then build and upload these files to the matching release:
+The upload step sends each asset separately and retries failures up to five times, waiting 5, 10, 20, and 40 seconds between attempts. A persistent failure leaves the job failed. Use **Re-run failed jobs** for transient GitHub upload errors; reruns replace matching asset names. Publish a new version for source fixes. For manual recovery, run the checks above, then build and upload these files to the matching release:
 
 ```bash
 npm pack

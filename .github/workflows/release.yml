@@ -78,7 +78,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release upload "$RELEASE_TAG" \
+          for asset in \
             "release-assets/pi-experiment-ops-${RELEASE_TAG#v}.tgz" \
-            "release-assets/pi-experiment-ops-${RELEASE_TAG#v}.tgz.sha256" \
-            --clobber
+            "release-assets/pi-experiment-ops-${RELEASE_TAG#v}.tgz.sha256"; do
+            for attempt in 1 2 3 4 5; do
+              if gh release upload "$RELEASE_TAG" "$asset" --clobber; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo "::error::Failed to upload $asset after $attempt attempts"
+                exit 1
+              fi
+              delay=$((5 * (1 << (attempt - 1))))
+              echo "::warning::Upload failed for $asset; retrying in ${delay}s"
+              sleep "$delay"
+            done
+          done
