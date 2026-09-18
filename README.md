@@ -2,7 +2,63 @@
 
 A standalone Pi package for experiment operations: MCP instruments, background tool execution through CodeMode, subagents, background processes, interactive terminals, agent modes, searchable SQLite transcripts, and pi-graph workflows. Upstream packages remain unchanged. The package runs through Pi's native terminal interface or its public SDK.
 
-## User installation: release package
+## Overview
+
+This package assembles a pinned, frontend-independent Pi distribution for experiment operations.
+
+### Bundled Pi extensions
+
+| Extension | Purpose |
+|---|---|
+| [`policy`](extensions/policy.ts) | Applies the configured plan/build tool-access policy. |
+| [`pi-mcp-adapter`](https://pi.dev/packages/pi-mcp-adapter) | Connects stdio and HTTP MCP instrument servers and exposes their tools to Pi. |
+| [`pi-interactive-shell`](https://pi.dev/packages/pi-interactive-shell) | Provides persistent terminal sessions for interactive programs and long-running work. |
+| [`pi-subagents`](https://pi.dev/packages/pi-subagents) | Delegates focused tasks to child Pi agents. |
+| [`@aliou/pi-processes`](https://pi.dev/packages/%40aliou/pi-processes) | Starts and monitors background commands without blocking the conversation. |
+| [`pi-agent-modes`](https://pi.dev/packages/pi-agent-modes) | Switches between configured operating modes such as plan and build. |
+| [`@gordonb/pi-archive`](https://pi.dev/packages/%40gordonb/pi-archive) | Indexes native session transcripts and provides full-text history search. |
+| [`pi-graph`](https://github.com/ali-abassi/pi-graph/tree/4db15464e2268755aafcb52e32341bd536dc56dd) | Runs resumable, gated multi-agent workflows. |
+| [`@ian-pascoe/pi-codemode`](https://pi.dev/packages/%40ian-pascoe/pi-codemode) | Composes registered Pi and MCP tools in persistent TypeScript cells, including background execution. |
+
+The launcher also loads the skills shipped with the bundled extensions.
+
+### APIs for downstream applications
+
+| Export | Purpose |
+|---|---|
+| `pi-experiment-ops` | Initializes workspaces, configures the process environment, resolves workspace paths, returns extension and skill resources with optional replacements, and exposes Pi, pi-graph, Python, and package paths. |
+| `pi-experiment-ops/mcp` | Exposes the MCP adapter factory used by wrapper extensions. |
+| `pi-experiment-ops/mcp-types` | Exposes MCP runtime type helpers. |
+| `pi-experiment-ops/subagents` | Exposes required-child subagent registration. |
+| `pi-experiment-ops/shell` | Exposes the native interactive-shell extension factory. |
+| `pi-experiment-ops/archive` | Exposes the archive extension and SQLite synchronization helpers. |
+| `pi-experiment-ops/sdk` | Re-exports the pinned native Pi SDK and its types without performing workspace setup. |
+
+See the [integration contract](docs/integration.md) for the complete consumer interface.
+
+### Helper commands
+
+| Command | Function |
+|---|---|
+| `pi-experiment-ops init` | Creates or completes a workspace while preserving existing configuration. |
+| `pi-experiment-ops configure` | Writes provider and model settings for Argo or another OpenAI-compatible endpoint. |
+| `pi-experiment-ops doctor` | Checks the Node.js version, bundled resources, Python environment, and Pi CLI. |
+| `pi-experiment-ops pi` | Launches Pi's native terminal interface with this package's extensions and skills. |
+| `pi-experiment-ops piw` | Runs or resumes pi-graph workflows. |
+
+Each command accepts `--workspace DIR`; `pi` and `piw` pass arguments following `--` to the underlying CLI.
+
+### Other notable components
+
+| Component | Purpose |
+|---|---|
+| Release and source installers | Provision the locked Node and Python dependencies without a global npm installation or administrator access. |
+| Isolated workspace state | Keeps configuration, credentials, sessions, temporary files, and workflow state outside the installed package. |
+| Toy workflow | Installs a generator → reviewer → renderer graph for validating execution, review gates, failure recovery, and resume behavior without physical instruments. |
+
+## Installation
+
+### User installation: release package
 
 Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.local/bin`. These locations and the workspace are configurable. No administrator access or global npm installation is needed.
 
@@ -36,7 +92,7 @@ sh install.sh --archive /path/to/pi-experiment-ops-0.2.0.tgz \
 
 See the [installation and endpoint guide](docs/installation.md) for options, developer Argo setup, managed-machine prerequisites, upgrades, recovery, and uninstalling.
 
-## Developer installation: local checkout
+### Developer installation: local checkout
 
 Clone this repository into a directory you own. On Linux:
 
