@@ -1,12 +1,13 @@
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
 
-// The MCP request stays open for the entire sleep; the server has no job API.
-export async function startSleepMcp(port = 0) {
+// The MCP request stays open until the fixture completes; the server has no job API.
+export async function startSleepMcp(port = 0, { manualRelease = false } = {}) {
   const calls = [];
   const timers = new Set();
   const started = Promise.withResolvers();
   const finished = Promise.withResolvers();
+  const release = manualRelease ? Promise.withResolvers() : null;
   const server = createServer(async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     if (req.method !== 'POST') return res.writeHead(405).end();
@@ -17,12 +18,13 @@ export async function startSleepMcp(port = 0) {
     let result;
     if (body.method === 'initialize') result = { protocolVersion: body.params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'sleep-test', version: '1.0.0' } };
     else if (body.method === 'ping') result = {};
-    else if (body.method === 'tools/list') result = { tools: [{ name: 'sleep', description: 'Sleep for exactly 60 seconds, then return. This is a blocking MCP call.', inputSchema: { type: 'object', properties: {} } }] };
+    else if (body.method === 'tools/list') result = { tools: [{ name: 'sleep', description: manualRelease ? 'Wait until released by the test. This is a blocking MCP call.' : 'Sleep for exactly 60 seconds, then return. This is a blocking MCP call.', inputSchema: { type: 'object', properties: {} } }] };
     else if (body.method === 'tools/call' && body.params.name === 'sleep') {
       const call = { startedAt: Date.now() };
       calls.push(call);
       started.resolve(call);
-      await new Promise(resolve => {
+      if (release) await release.promise;
+      else await new Promise(resolve => {
         const timer = setTimeout(() => { timers.delete(timer); resolve(); }, 60_000);
         timers.add(timer);
       });
@@ -38,7 +40,12 @@ export async function startSleepMcp(port = 0) {
   return {
     calls, started: started.promise, finished: finished.promise,
     url: `http://127.0.0.1:${server.address().port}/mcp`,
+    release() {
+      if (!release) throw new Error('This MCP server was not started with manualRelease');
+      release.resolve();
+    },
     async close() {
+      release?.resolve();
       for (const timer of timers) clearTimeout(timer);
       server.closeAllConnections();
       await new Promise(resolve => server.close(resolve));

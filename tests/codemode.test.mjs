@@ -10,7 +10,7 @@ import { startSleepMcp } from './fixtures/sleep-mcp.mjs';
 const root = resolve(process.env.PI_OPS_PACKAGE_ROOT || new URL('..', import.meta.url).pathname);
 const ops = await import(join(root, 'lib/index.mjs'));
 
-test('CodeMode releases the Pi agent loop during an ordinary 60-second MCP call', { timeout: 120_000 }, async t => {
+test('CodeMode releases the Pi agent loop while an MCP call is pending', { timeout: 120_000 }, async t => {
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-codemode-'));
   const previousCwd = process.cwd();
   const previousEnv = { ...process.env };
@@ -21,9 +21,10 @@ test('CodeMode releases the Pi agent loop during an ordinary 60-second MCP call'
     rmSync(workspace, { recursive: true, force: true });
   });
   ops.initialize(workspace);
+  writeFileSync(join(workspace, '.pi-experiment-ops/agent/permission-system.json'), JSON.stringify({ enabled: true, debug: false, yoloMode: true, forwardedPromptTimeoutSeconds: 30 }));
   ops.configureEnvironment(workspace);
   process.chdir(workspace);
-  const mcp = await startSleepMcp();
+  const mcp = await startSleepMcp(0, { manualRelease: true });
   t.after(() => mcp.close());
   writeFileSync(join(workspace, '.pi/mcp.json'), JSON.stringify({ mcpServers: { sleeper: { url: mcp.url, lifecycle: 'eager', directTools: true, requestTimeoutMs: 90_000 } } }));
   writeFileSync(join(workspace, 'independent.txt'), 'Independent work completed while MCP sleeps.');
@@ -91,10 +92,10 @@ test('CodeMode releases the Pi agent loop during an ordinary 60-second MCP call'
   assert.equal(requests.length, 4, 'Pi must reach subsequent model calls while the cell runs');
   await mcp.started;
   assert.equal(mcp.calls[0].finishedAt, undefined);
-  t.diagnostic(`Pi completed four model requests and an independent read in ${releasedAt - launchedAt} ms; MCP sleep is still running.`);
+  t.diagnostic(`Pi completed four model requests and an independent read in ${releasedAt - launchedAt} ms; the MCP call remains pending.`);
 
+  mcp.release();
   const completed = await mcp.finished;
-  assert.ok(completed.finishedAt - completed.startedAt >= 60_000);
   assert.ok(read.at < completed.finishedAt);
   await delay(200); // Allow the completed MCP response to reach the worker.
   await session.prompt('Retrieve the completed CodeMode result.');
@@ -103,5 +104,5 @@ test('CodeMode releases the Pi agent loop during an ordinary 60-second MCP call'
   assert.match(JSON.stringify(result.data), /completed/);
   assert.equal(mcp.calls.length, 1, 'Result retrieval must not repeat the MCP operation');
   assert.deepEqual(errors, []);
-  t.diagnostic(`MCP completed after ${completed.finishedAt - completed.startedAt} ms; codemode_result returned success without rerunning it.`);
+  t.diagnostic(`MCP completed after test release; codemode_result returned success without rerunning it.`);
 });
