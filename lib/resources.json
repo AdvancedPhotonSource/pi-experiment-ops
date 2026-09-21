@@ -7,5 +7,6 @@
   "modes": "node_modules/pi-agent-modes/extensions/index.ts",
   "archive": "extensions/archive.ts",
   "graph": "node_modules/@ali-abassi/piw/extensions/pi-graph.ts",
-  "codemode": "node_modules/@ian-pascoe/pi-codemode/src/index.ts"
+  "codemode": "node_modules/@ian-pascoe/pi-codemode/src/index.ts",
+  "permissions": "extensions/permissions.ts"
 }

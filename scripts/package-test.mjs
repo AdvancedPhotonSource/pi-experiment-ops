@@ -9,6 +9,7 @@ const run = (bin, args, cwd = target, env = process.env) => execFileSync(bin, ar
 const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', target], source))[0];
 assert.ok(packed.bundled.includes('pi-subagents'));
 assert.ok(packed.bundled.includes('@ian-pascoe/pi-codemode'));
+assert.ok(packed.bundled.includes('pi-permission-system'));
 const launcher = packed.files.find(file => file.path === 'bin/pi');
 assert.ok(launcher, 'Release tarball is missing bin/pi. Commit the Pi launcher source before releasing.');
 assert.ok(launcher.mode & 0o111, 'Release tarball bin/pi must be executable');
@@ -17,7 +18,7 @@ run('npm', ['install', '--prefix', target, '--omit=dev', '--legacy-peer-deps', '
 const root = join(target, 'node_modules/pi-experiment-ops');
 assert.ok(existsSync(join(root, 'requirements.lock')));
 for (let i = 0; i < 2; i++) run('bash', [join(root, 'scripts/install.sh'), join(target, 'workspace')]);
-for (const name of ['bundle', 'sdk', 'codemode']) cpSync(join(source, `tests/${name}.test.mjs`), join(target, `${name}.test.mjs`));
+for (const name of ['bundle', 'sdk', 'codemode', 'permissions']) cpSync(join(source, `tests/${name}.test.mjs`), join(target, `${name}.test.mjs`));
 cpSync(join(source, 'tests/fixtures'), join(target, 'fixtures'), { recursive: true });
-console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs'), join(target, 'sdk.test.mjs'), join(target, 'codemode.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
+console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs'), join(target, 'sdk.test.mjs'), join(target, 'codemode.test.mjs'), join(target, 'permissions.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
 console.log(`Standalone tarball installation and real Pi/graph passed in ${target}`);

@@ -20,10 +20,13 @@ test('isolated bundle resources, real Pi chat and real graph children', { timeou
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
   ops.initialize(workspace);
   assert.equal(JSON.parse(readFileSync(join(workspace, '.pi/mcp.json'))).settings.scriptMode, false);
-  assert.equal(ops.resources().extensions.length, 9);
-  assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 9);
+  assert.equal(JSON.parse(readFileSync(join(workspace, '.pi-experiment-ops/agent/permission-system.json'))).yoloMode, false);
+  assert.equal(JSON.parse(readFileSync(join(workspace, '.pi-experiment-ops/agent/pi-permissions.jsonc'))).defaultPolicy.tools, 'ask');
+  assert.equal(ops.resources().extensions.length, 10);
+  assert.equal(new Set(ops.resources({ terminal: '/replacement.ts' }).extensions).size, 10);
   assert.ok(ops.resources({ terminal: '/replacement.ts' }).extensions.includes('/replacement.ts'));
   assert.throws(() => ops.resources({ typo: 'x' }), /Unknown extension/);
+  writeFileSync(join(workspace, '.pi-experiment-ops/agent/permission-system.json'), JSON.stringify({ enabled: true, debug: false, yoloMode: true, forwardedPromptTimeoutSeconds: 30 }));
   const settings = join(workspace, '.pi-experiment-ops/agent/settings.json');
   writeFileSync(settings, '{"offline":true,"packages":[],"theme":"light"}');
   ops.initialize(workspace);

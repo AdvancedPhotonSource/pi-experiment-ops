@@ -1,6 +1,6 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A standalone Pi distribution for experiment operations, MCP instruments and graph workflows",
   "type": "module",
   "engines": {
@@ -41,19 +41,20 @@
     "pi-package"
   ],
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "0.85.1",
+    "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
+    "@aliou/pi-processes": "0.12.0",
     "@earendil-works/pi-agent-core": "0.85.1",
     "@earendil-works/pi-ai": "0.85.1",
+    "@earendil-works/pi-coding-agent": "0.85.1",
     "@earendil-works/pi-tui": "0.85.1",
-    "typebox": "1.3.7",
-    "pi-mcp-adapter": "2.34.0",
-    "pi-subagents": "0.68.0",
-    "@aliou/pi-processes": "0.12.0",
-    "pi-interactive-shell": "0.15.2",
-    "pi-agent-modes": "0.3.0",
-    "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
     "@gordonb/pi-archive": "git+https://github.com/gordonbrander/pi-archive.git#4030631e21608f549033b9d291dbf0d76578245a",
-    "@ian-pascoe/pi-codemode": "0.7.4"
+    "@ian-pascoe/pi-codemode": "0.7.4",
+    "pi-agent-modes": "0.3.0",
+    "pi-interactive-shell": "0.15.2",
+    "pi-mcp-adapter": "2.34.0",
+    "pi-permission-system": "0.8.0",
+    "pi-subagents": "0.68.0",
+    "typebox": "1.3.7"
   },
   "bundledDependencies": [
     "pi-mcp-adapter",
@@ -63,7 +64,8 @@
     "pi-agent-modes",
     "@ali-abassi/piw",
     "@gordonb/pi-archive",
-    "@ian-pascoe/pi-codemode"
+    "@ian-pascoe/pi-codemode",
+    "pi-permission-system"
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
@@ -80,7 +82,8 @@
       "node_modules/pi-agent-modes/extensions/index.ts",
       "extensions/archive.ts",
       "node_modules/@ali-abassi/piw/extensions/pi-graph.ts",
-      "node_modules/@ian-pascoe/pi-codemode/src/index.ts"
+      "node_modules/@ian-pascoe/pi-codemode/src/index.ts",
+      "extensions/permissions.ts"
     ],
     "skills": [
       "node_modules/@aliou/pi-processes/skills",

@@ -19,6 +19,7 @@ This package assembles a pinned, frontend-independent Pi distribution for experi
 | [`@gordonb/pi-archive`](https://pi.dev/packages/%40gordonb/pi-archive) | Indexes native session transcripts and provides full-text history search. |
 | [`pi-graph`](https://github.com/ali-abassi/pi-graph/tree/4db15464e2268755aafcb52e32341bd536dc56dd) | Runs resumable, gated multi-agent workflows. |
 | [`@ian-pascoe/pi-codemode`](https://pi.dev/packages/%40ian-pascoe/pi-codemode) | Composes registered Pi and MCP tools in persistent TypeScript cells, including background execution. |
+| [`pi-permission-system`](https://pi.dev/packages/pi-permission-system) | Applies allow, session approval, ask, and deny policies to Pi and MCP tool calls. |
 
 The launcher also loads the skills shipped with the bundled extensions.
 
@@ -65,8 +66,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.3.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.3.0
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.4.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.4.0
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -74,8 +75,8 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.3.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.3.0 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.4.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.4.0 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
@@ -86,7 +87,7 @@ Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. I
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.3.0.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.4.0.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 
@@ -117,9 +118,10 @@ node bin/pi-experiment-ops.mjs pi --workspace "$HOME/pi-experiment-workspace"
 
 - MCP configuration is `<workspace>/.pi/mcp.json`, with an `mcpServers` object. The MCP adapter accepts stdio commands or HTTP URLs. Host configuration discovery is disabled; tools are exposed individually by default. Keep secrets in environment variables or private workspace configuration.
 - Provider configuration, credentials, modes, shell settings, and Pi sessions live under `<workspace>/.pi-experiment-ops/agent`. Startup preserves existing files. Choose a provider/model with Pi flags or Pi settings.
+- Tool permissions default to asking for every unmatched call. Use `/permissions auto` to auto-allow requests for the current TUI session, `/permissions ask` to restore prompts, or edit `.pi-experiment-ops/agent/pi-permissions.jsonc` for tool and command patterns. Explicit deny rules remain enforced in auto mode.
 - Pi owns agent execution and native session history. `/resume` restores conversations. A resumed transcript does not restart past processes or terminals.
 - Use `subagent` for delegated work, `process` for background commands, and `interactive_shell` for persistent terminals. These retain the upstream native terminal UI. Their skills describe controls and cancellation.
-- Use `codemode_execute` with `wait: false` to run registered Pi or MCP tools in a background TypeScript cell, then retrieve its result with `codemode_result({ sessionId })`. The MCP adapter supplies the MCP tools; CodeMode supplies execution and polling. The bundled CodeMode skill describes configuration and troubleshooting. Background calls retain the MCP server's configured request timeout; set `requestTimeoutMs` above the expected operation duration.
+- Use `codemode_execute` with `wait: false` to run registered Pi or MCP tools in a background TypeScript cell, then retrieve its result with `codemode_result({ sessionId })`. The permission policy gates the CodeMode launch; calls inside an accepted cell are not prompted separately. The MCP adapter supplies the MCP tools; CodeMode supplies execution and polling. The bundled CodeMode skill describes configuration and troubleshooting. Background calls retain the MCP server's configured request timeout; set `requestTimeoutMs` above the expected operation duration.
 - The archive indexes this workspace's agent sessions into `.pi/archive.db`; `search_archive` searches transcripts.
 - Agent modes provide plan/build behavior; plan defaults deny write tools, bash, and unknown tools. This is an execution policy, not a sandbox. Native agents run with your account's filesystem and network permissions.
 - Instrument servers must serialize conflicting physical operations until completion, including operations returning asynchronous job IDs. Sequential agent tools do not serialize separate agents.
@@ -139,7 +141,7 @@ The example uses one worker, 30-second step limits, JSON gates, and an atomic co
 
 ## Background MCP acceptance test
 
-Run `node --test tests/codemode.test.mjs` to exercise a blocking MCP tool that sleeps for 60 seconds. A deterministic local model fixture drives the real Pi agent loop: launch a CodeMode cell with `wait: false`, read another file, confirm the cell is pending, then retrieve its completed result. The same test runs against the installed release in `npm run test:package`.
+Run `node --test tests/codemode.test.mjs` to exercise a blocking MCP tool held behind a test-controlled release gate. A deterministic local model fixture drives the real Pi agent loop: launch a CodeMode cell with `wait: false`, read another file, confirm the cell is pending, release the MCP call, then retrieve its completed result. The same test runs against the installed release in `npm run test:package` without a long artificial delay.
 
 For manual testing, `node tests/fixtures/sleep-mcp.mjs 8766` starts the test server at `http://127.0.0.1:8766/mcp` (8766 is the default port). Add that URL as a server named `sleeper` in the workspace's `.pi/mcp.json`, with `directTools: true`, `lifecycle: "eager"`, and `requestTimeoutMs: 90000`. In a persistent Pi session, ask the agent to run `return await tools.sleeper_sleep({});` through `codemode_execute` with `wait: false`, do independent work, and later retrieve the result with `codemode_result`.
 
