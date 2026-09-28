@@ -6,9 +6,10 @@ import struct
 import sys
 import zlib
 
-run, input_file = map(Path, sys.argv[1:])
-if "fail-command" in input_file.read_text() and not (run / "allow-render").exists():
-    raise RuntimeError("Requested failure; create allow-render in the run directory to test resume")
+run = Path(sys.argv[1])
+task = sys.argv[2]
+if "fail-command" in task:
+    raise RuntimeError("Requested command failure; run again with a different input")
 review = json.loads((run / "review.md").read_text())
 assert review["approved"] is True
 dataset = json.loads((run / "generate.md").read_text())

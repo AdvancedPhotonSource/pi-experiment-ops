@@ -2,6 +2,12 @@
 
 Notable changes to pi-experiment-ops are documented here.
 
+## 0.5.0
+
+- Replace pi-graph with pi-subagents workflow resources and a JavaScript toy workflow.
+- Remove piw CLI/export and graph environment variables; use PI_OPS_PYTHON for the provisioned interpreter.
+- Workflow retries execute fresh runs. Existing workspace definitions are preserved for manual migration.
+
 ## [0.4.0] - 2026-09-21
 
 ### Added

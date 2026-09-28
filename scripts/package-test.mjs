@@ -8,6 +8,7 @@ const target = mkdtempSync(join(tmpdir(), 'pi-ops-package-'));
 const run = (bin, args, cwd = target, env = process.env) => execFileSync(bin, args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 16 * 1024 * 1024 });
 const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', target], source))[0];
 assert.ok(packed.bundled.includes('pi-subagents'));
+assert.ok(!packed.bundled.includes('@ali-abassi/piw'));
 assert.ok(packed.bundled.includes('@ian-pascoe/pi-codemode'));
 assert.ok(packed.bundled.includes('pi-permission-system'));
 const launcher = packed.files.find(file => file.path === 'bin/pi');
@@ -21,4 +22,4 @@ for (let i = 0; i < 2; i++) run('bash', [join(root, 'scripts/install.sh'), join(
 for (const name of ['bundle', 'sdk', 'codemode', 'permissions']) cpSync(join(source, `tests/${name}.test.mjs`), join(target, `${name}.test.mjs`));
 cpSync(join(source, 'tests/fixtures'), join(target, 'fixtures'), { recursive: true });
 console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs'), join(target, 'sdk.test.mjs'), join(target, 'codemode.test.mjs'), join(target, 'permissions.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
-console.log(`Standalone tarball installation and real Pi/graph passed in ${target}`);
+console.log(`Standalone tarball installation and real Pi/subagents passed in ${target}`);

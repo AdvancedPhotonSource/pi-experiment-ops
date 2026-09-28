@@ -1,7 +1,7 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.4.0",
-  "description": "A standalone Pi distribution for experiment operations, MCP instruments and graph workflows",
+  "version": "0.5.0",
+  "description": "A standalone Pi distribution for experiment operations, MCP instruments and subagent workflows",
   "type": "module",
   "engines": {
     "node": ">=22.19.0"
@@ -41,7 +41,6 @@
     "pi-package"
   ],
   "dependencies": {
-    "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
     "@aliou/pi-processes": "0.12.0",
     "@earendil-works/pi-agent-core": "0.85.1",
     "@earendil-works/pi-ai": "0.85.1",
@@ -62,7 +61,6 @@
     "@aliou/pi-processes",
     "pi-interactive-shell",
     "pi-agent-modes",
-    "@ali-abassi/piw",
     "@gordonb/pi-archive",
     "@ian-pascoe/pi-codemode",
     "pi-permission-system"
@@ -81,14 +79,13 @@
       "node_modules/@aliou/pi-processes/extensions/processes/index.ts",
       "node_modules/pi-agent-modes/extensions/index.ts",
       "extensions/archive.ts",
-      "node_modules/@ali-abassi/piw/extensions/pi-graph.ts",
+      "extensions/workflows.ts",
       "node_modules/@ian-pascoe/pi-codemode/src/index.ts",
       "extensions/permissions.ts"
     ],
     "skills": [
       "node_modules/@aliou/pi-processes/skills",
       "node_modules/pi-interactive-shell/skills",
-      "node_modules/@ali-abassi/piw/SKILL.md",
       "node_modules/@ian-pascoe/pi-codemode/skills"
     ]
   }

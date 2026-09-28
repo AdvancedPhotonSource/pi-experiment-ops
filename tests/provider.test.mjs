@@ -42,7 +42,6 @@ test('provider setup merges private configuration and real Pi sends endpoint ide
     assert.equal(read(join(directory, 'auth.json')).untouched, true);
     assert.equal(statSync(configPath).mode & 0o777, 0o600);
     assert.equal(read(join(directory, 'settings.json')).defaultProvider, 'argo');
-    assert.match(readFileSync(join(workspace, 'workflows/toy/steps.yaml'), 'utf8'), /model: "argo\/toy"/);
     assert.match(await chat(), /Configured endpoint works/);
     assert.equal(requests[0].body.user, 'test-user');
     assert.equal(requests[0].authorization, 'Bearer test-user');

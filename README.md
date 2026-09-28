@@ -1,6 +1,6 @@
 # pi-experiment-ops
 
-A standalone Pi package for experiment operations: MCP instruments, background tool execution through CodeMode, subagents, background processes, interactive terminals, agent modes, searchable SQLite transcripts, and pi-graph workflows. Upstream packages remain unchanged. The package runs through Pi's native terminal interface or its public SDK.
+A standalone Pi package for experiment operations: MCP instruments, background tool execution through CodeMode, subagents, background processes, interactive terminals, agent modes, searchable SQLite transcripts, and scripted subagent workflows. Upstream packages remain unchanged. The package runs through Pi's native terminal interface or its public SDK.
 
 ## Overview
 
@@ -13,11 +13,11 @@ This package assembles a pinned, frontend-independent Pi distribution for experi
 | [`policy`](extensions/policy.ts) | Applies the configured plan/build tool-access policy. |
 | [`pi-mcp-adapter`](https://pi.dev/packages/pi-mcp-adapter) | Connects stdio and HTTP MCP instrument servers and exposes their tools to Pi. |
 | [`pi-interactive-shell`](https://pi.dev/packages/pi-interactive-shell) | Provides persistent terminal sessions for interactive programs and long-running work. |
-| [`pi-subagents`](https://pi.dev/packages/pi-subagents) | Delegates focused tasks to child Pi agents. |
+| [`pi-subagents`](https://pi.dev/packages/pi-subagents) | Runs child agents and scripted multi-agent workflows. |
+| [`workflows`](extensions/workflows.ts) | Registers trusted workspace workflow resources with pi-subagents. |
 | [`@aliou/pi-processes`](https://pi.dev/packages/%40aliou/pi-processes) | Starts and monitors background commands without blocking the conversation. |
 | [`pi-agent-modes`](https://pi.dev/packages/pi-agent-modes) | Switches between configured operating modes such as plan and build. |
 | [`@gordonb/pi-archive`](https://pi.dev/packages/%40gordonb/pi-archive) | Indexes native session transcripts and provides full-text history search. |
-| [`pi-graph`](https://github.com/ali-abassi/pi-graph/tree/4db15464e2268755aafcb52e32341bd536dc56dd) | Runs resumable, gated multi-agent workflows. |
 | [`@ian-pascoe/pi-codemode`](https://pi.dev/packages/%40ian-pascoe/pi-codemode) | Composes registered Pi and MCP tools in persistent TypeScript cells, including background execution. |
 | [`pi-permission-system`](https://pi.dev/packages/pi-permission-system) | Applies allow, session approval, ask, and deny policies to Pi and MCP tool calls. |
 
@@ -27,7 +27,7 @@ The launcher also loads the skills shipped with the bundled extensions.
 
 | Export | Purpose |
 |---|---|
-| `pi-experiment-ops` | Initializes workspaces, configures the process environment, resolves workspace paths, returns extension and skill resources with optional replacements, and exposes Pi, pi-graph, Python, and package paths. |
+| `pi-experiment-ops` | Initializes workspaces, configures the process environment, resolves workspace paths, returns extension and skill resources with optional replacements, and exposes Pi, Python, and package paths. |
 | `pi-experiment-ops/mcp` | Exposes the MCP adapter factory used by wrapper extensions. |
 | `pi-experiment-ops/mcp-types` | Exposes MCP runtime type helpers. |
 | `pi-experiment-ops/subagents` | Exposes required-child subagent registration. |
@@ -45,9 +45,8 @@ See the [integration contract](docs/integration.md) for the complete consumer in
 | `pi-experiment-ops configure` | Writes provider and model settings for Argo or another OpenAI-compatible endpoint. |
 | `pi-experiment-ops doctor` | Checks the Node.js version, bundled resources, Python environment, and Pi CLI. |
 | `pi-experiment-ops pi` | Launches Pi's native terminal interface with this package's extensions and skills. |
-| `pi-experiment-ops piw` | Runs or resumes pi-graph workflows. |
 
-Each command accepts `--workspace DIR`; `pi` and `piw` pass arguments following `--` to the underlying CLI.
+Each command accepts `--workspace DIR`; `pi` passes arguments following `--` to the underlying CLI.
 
 ### Other notable components
 
@@ -55,7 +54,7 @@ Each command accepts `--workspace DIR`; `pi` and `piw` pass arguments following 
 |---|---|
 | Release and source installers | Provision the locked Node and Python dependencies without a global npm installation or administrator access. |
 | Isolated workspace state | Keeps configuration, credentials, sessions, temporary files, and workflow state outside the installed package. |
-| Toy workflow | Installs a generator → reviewer → renderer graph for validating execution, review gates, failure recovery, and resume behavior without physical instruments. |
+| Toy workflow | Installs a generator → reviewer → renderer workflow for validating execution, review checks, command failures, and fresh retries without physical instruments. |
 
 ## Installation
 
@@ -66,8 +65,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.4.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.4.0
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.0
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -75,19 +74,19 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.4.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.4.0 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.0 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
-The Argo preset uses `https://apps.inside.anl.gov/argoapi/v1`. Choose an exact model ID from your endpoint's `/models` response. Setup configures Pi's default provider/model and the untouched toy workflow. It sends no inference request. Generic OpenAI-compatible endpoints are supported with `--preset openai --base-url URL --model ID --api-key-env VARIABLE_NAME`.
+The Argo preset uses `https://apps.inside.anl.gov/argoapi/v1`. Choose an exact model ID from your endpoint's `/models` response. Setup configures Pi's default provider/model inherited by the toy workflow. It sends no inference request. Generic OpenAI-compatible endpoints are supported with `--preset openai --base-url URL --model ID --api-key-env VARIABLE_NAME`.
 
 Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. If desired, add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration. The installer does not edit shell startup files. For other providers, use Pi's `/login` or configure workspace provider files.
 
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.4.0.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.5.0.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 
@@ -130,14 +129,17 @@ Full MCP server log/progress content is not exposed through the inspected public
 
 ## Workflows
 
-Initialization copies the toy generator → reviewer → renderer graph to `workflows/toy`. Set its `model` to your provider/model before running:
+Initialization copies the toy generator → reviewer → renderer workflow to `workflows/toy/workflow.mjs`. The module exports a pi-subagents workflow resource definition with a bounded `resolve(args)` function. Workspace resources register when the native Pi session starts.
 
-```bash
-pi-experiment-ops piw --workspace /absolute/workspace -- run workflows/toy/steps.yaml --input 'A toy dataset' --json --no-cache
-pi-experiment-ops piw --workspace /absolute/workspace -- resume workflows/toy/steps.yaml RUN_ID --json
+Invoke the `subagent` tool with:
+
+```json
+{"workflow":"toy","args":{"input":"A toy dataset","outputDirectory":"/absolute/workspace/output"},"cwd":"/absolute/workspace/output","async":true}
 ```
 
-The example uses one worker, 30-second step limits, JSON gates, and an atomic completion receipt. Rejected review blocks rendering. `fail-command` in the input deliberately fails the renderer; create `allow-render` inside the run directory and resume. Completed steps are reused and the receipt prevents repeated completion writes. pi-graph is the sole runner. Its agent transcripts are governed by upstream child persistence behavior.
+Create the output directory first. Children inherit the selected model. The example validates JSON dataset/reviewer responses and grants one fixed rendering command through `runs.host`. Rejected reviews block rendering. `fail-command` in the input deliberately fails the renderer. Run again in a fresh output directory to repeat all steps. Pi-subagents owns child execution, cancellation, artifacts, and workflow receipts.
+
+Workspace modules are trusted code. Export `{ name, version, resolve }`; return `{ script, hostCommands? }` or `{ error }`. Script bodies use JavaScript, `runs.run` for sequential steps and `runs.all` for fanout. `hostCommands` grants exact command/key pairs. See [pi-subagents' resource API](https://github.com/nicobailon/pi-subagents/blob/main/docs/extension-api.md). Existing YAML workflows require manual conversion; initialization preserves existing directories.
 
 ## Background MCP acceptance test
 

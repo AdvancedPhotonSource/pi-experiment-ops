@@ -9,7 +9,7 @@ const target = mkdtempSync(join(tmpdir(), 'pi-ops-bootstrap-'));
 const home = join(target, 'home'); mkdirSync(home);
 const profile = join(home, '.profile'); writeFileSync(profile, '# untouched\n');
 const env = { ...process.env, HOME: home, PATH: '/usr/bin:/bin', XDG_DATA_HOME: join(home, '.local/share'), XDG_CACHE_HOME: join(home, '.cache'), npm_config_cache: join(home, '.npm') };
-for (const key of ['PI_CODING_AGENT_DIR', 'PI_GRAPH_PYTHON', 'UV_PYTHON_INSTALL_DIR', 'UV_INSTALL_DIR', 'UV_UNMANAGED_INSTALL']) delete env[key];
+for (const key of ['PI_CODING_AGENT_DIR', 'PI_OPS_PYTHON', 'UV_PYTHON_INSTALL_DIR', 'UV_INSTALL_DIR', 'UV_UNMANAGED_INSTALL']) delete env[key];
 assert.notEqual(spawnSync('node', ['--version'], { env }).status, 0, 'Test requires a PATH without Node');
 const packed = JSON.parse(execFileSync('npm', ['pack', '--json', '--pack-destination', target], { cwd: source, encoding: 'utf8' }))[0];
 const archive = join(target, packed.filename);

@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 const root = resolve(process.env.PI_OPS_PACKAGE_ROOT || new URL('..', import.meta.url).pathname);
 const require = createRequire(join(root, 'package.json'));
 const ops = await import(pathToFileURL(join(root, 'lib/index.mjs')));
-const environment = () => Object.fromEntries(['PI_CODING_AGENT_DIR', 'PI_GRAPH_HOME', 'PI_GRAPH_STATE_DIR', 'PI_GRAPH_ROOTS', 'PI_GRAPH_PYTHON', 'PI_SUBAGENTS_TEMP_ROOT', 'TMPDIR', 'PATH'].map(key => [key, process.env[key]]));
+const environment = () => Object.fromEntries(['PI_CODING_AGENT_DIR', 'PI_OPS_PYTHON', 'PI_SUBAGENTS_TEMP_ROOT', 'TMPDIR', 'PATH'].map(key => [key, process.env[key]]));
 const before = environment();
 const sdk = await import(pathToFileURL(require.resolve('pi-experiment-ops/sdk')));
 const nativePath = resolve(dirname(ops.piCli), '../index.js');

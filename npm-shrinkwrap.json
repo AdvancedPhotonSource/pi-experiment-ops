@@ -1,25 +1,23 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "pi-experiment-ops",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "bundleDependencies": [
         "pi-mcp-adapter",
         "pi-subagents",
         "@aliou/pi-processes",
         "pi-interactive-shell",
         "pi-agent-modes",
-        "@ali-abassi/piw",
         "@gordonb/pi-archive",
         "@ian-pascoe/pi-codemode",
         "pi-permission-system"
       ],
       "dependencies": {
-        "@ali-abassi/piw": "git+https://github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
         "@aliou/pi-processes": "0.12.0",
         "@earendil-works/pi-agent-core": "0.85.1",
         "@earendil-works/pi-ai": "0.85.1",
@@ -39,21 +37,6 @@
       },
       "engines": {
         "node": ">=22.19.0"
-      }
-    },
-    "node_modules/@ali-abassi/piw": {
-      "version": "0.3.0",
-      "resolved": "git+ssh://git@github.com/ali-abassi/pi-graph.git#4db15464e2268755aafcb52e32341bd536dc56dd",
-      "integrity": "sha512-A4LWAjWM+280++XHaEXiKsyEngTtDK2axYBhx2hr0UCwPFpXYuFqxeYAgfplnxAjOZFhiZEohim0OfCcVeQh5w==",
-      "inBundle": true,
-      "license": "MIT",
-      "bin": {
-        "piw": "bin/piw"
-      },
-      "peerDependencies": {
-        "@earendil-works/pi-ai": "*",
-        "@earendil-works/pi-coding-agent": "*",
-        "typebox": "*"
       }
     },
     "node_modules/@aliou/pi-processes": {

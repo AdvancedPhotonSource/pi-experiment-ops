@@ -3,11 +3,11 @@ import { configureProvider } from '../lib/provider.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { initialize, configureEnvironment, resources, piCli, piwCli } from '../lib/index.mjs';
+import { initialize, configureEnvironment, resources, piCli } from '../lib/index.mjs';
 const args = process.argv.slice(2);
 const command = args.shift() || 'help';
 if (['help', '--help'].includes(command)) {
-  console.log('pi-experiment-ops init|doctor|configure|pi|piw [--workspace DIR] [-- upstream arguments]');
+  console.log('pi-experiment-ops init|doctor|configure|pi [--workspace DIR] [-- upstream arguments]');
 } else {
   const separator = args.indexOf('--');
   const index = args.indexOf('--workspace');
@@ -30,13 +30,13 @@ if (['help', '--help'].includes(command)) {
     console.log(JSON.stringify(configureProvider(workspace, options), null, 2));
   }
   else if (command === 'doctor') {
-    const checks = { node: Number(process.versions.node.split('.')[0]) > 22 || (Number(process.versions.node.split('.')[0]) === 22 && Number(process.versions.node.split('.')[1]) >= 19), resources: [...resources().extensions, ...resources().skills].every(existsSync), python: spawnSync(process.env.PI_GRAPH_PYTHON, ['-c', 'import yaml, ruamel.yaml, jsonschema']).status === 0, pi: spawnSync(process.execPath, [piCli, '--version']).status === 0 };
+    const checks = { node: Number(process.versions.node.split('.')[0]) > 22 || (Number(process.versions.node.split('.')[0]) === 22 && Number(process.versions.node.split('.')[1]) >= 19), resources: [...resources().extensions, ...resources().skills].every(existsSync), python: spawnSync(process.env.PI_OPS_PYTHON, ['-c', 'import yaml, ruamel.yaml, jsonschema']).status === 0, pi: spawnSync(process.execPath, [piCli, '--version']).status === 0 };
     console.log(JSON.stringify({ workspace, checks }, null, 2));
     process.exitCode = Object.values(checks).every(Boolean) ? 0 : 1;
-  } else if (['pi', 'piw'].includes(command)) {
+  } else if (command === 'pi') {
     const forwarded = args[0] === '--' ? args.slice(1) : args;
     const paths = resources();
-    const child = command === 'pi' ? spawn(process.execPath, [piCli, '--no-extensions', '--no-skills', '--no-context-files', ...paths.extensions.flatMap(path => ['-e', path]), ...paths.skills.flatMap(path => ['--skill', path]), ...forwarded], { cwd: workspace, stdio: 'inherit' }) : spawn(piwCli, forwarded, { cwd: workspace, stdio: 'inherit' });
+    const child = spawn(process.execPath, [piCli, '--no-extensions', '--no-skills', '--no-context-files', ...paths.extensions.flatMap(path => ['-e', path]), ...paths.skills.flatMap(path => ['--skill', path]), ...forwarded], { cwd: workspace, stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => child.kill(signal));
     child.on('error', error => { console.error(error.message); process.exitCode = 1; });
     child.on('exit', (code, signal) => { process.exitCode = code ?? (signal === 'SIGINT' ? 130 : 143); });

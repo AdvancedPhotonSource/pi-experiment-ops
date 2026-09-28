@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 const root = resolve(process.env.PI_OPS_PACKAGE_ROOT || new URL('..', import.meta.url).pathname);
@@ -16,7 +16,7 @@ const run = (args, workspace) => new Promise((resolve, reject) => {
   child.on('error', error => { clearTimeout(timeout); reject(error); });
   child.on('exit', code => { clearTimeout(timeout); resolve({ code, out, err }); });
 });
-test('isolated bundle resources, real Pi chat and real graph children', { timeout: 180000 }, async () => {
+test('isolated bundle resources, real Pi chat and real subagent workflows', { timeout: 180000 }, async () => {
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
   ops.initialize(workspace);
   assert.equal(JSON.parse(readFileSync(join(workspace, '.pi/mcp.json'))).settings.scriptMode, false);
@@ -39,6 +39,25 @@ test('isolated bundle resources, real Pi chat and real graph children', { timeou
     requests.push(request);
     const prompt = JSON.stringify(request.messages);
     const content = prompt.includes('PI_OPS_TOY_GENERATE') ? JSON.stringify({ title: 'Toy', values: [1, 2, 3] }) : prompt.includes('PI_OPS_TOY_REVIEW') ? JSON.stringify({ approved: !prompt.includes('reject-review'), reason: 'Fixture review' }) : 'Standalone Pi bundle works.';
+    const user = [...request.messages].reverse().find(message => message.role === 'user');
+    const text = typeof user?.content === 'string' ? user.content : (user?.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('\n');
+    if (request.tools?.some(tool => tool.function.name === 'structured_output') && /PI_OPS_TOY_(GENERATE|REVIEW)/.test(text) && request.messages.at(-1).role !== 'tool') {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      const delta = { role: 'assistant', tool_calls: [{ index: 0, id: 'structured-call', type: 'function', function: { name: 'structured_output', arguments: JSON.stringify({ value: JSON.parse(content) }) } }] };
+      for (const [part, finish_reason] of [[delta, null], [{}, 'tool_calls']]) res.write('data: ' + JSON.stringify({ id: 'fixture', object: 'chat.completion.chunk', model: 'toy', choices: [{ index: 0, delta: part, finish_reason }] }) + '\n\n');
+      res.end('data: [DONE]\n\n');
+      return;
+    }
+    if (text?.startsWith('run-toy ') && request.messages.at(-1).role !== 'tool') {
+      const input = text.slice(8);
+      const cwd = join(workspace, 'runs', input);
+      mkdirSync(cwd, { recursive: true });
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      const delta = { role: 'assistant', tool_calls: [{ index: 0, id: 'toy-call', type: 'function', function: { name: 'subagent', arguments: JSON.stringify({ workflow: 'toy', args: { input, outputDirectory: cwd }, cwd, model: 'local-test/toy', async: false, timeoutMs: 60000 }) } }] };
+      for (const [part, finish_reason] of [[delta, null], [{}, 'tool_calls']]) res.write('data: ' + JSON.stringify({ id: 'fixture', object: 'chat.completion.chunk', model: 'toy', choices: [{ index: 0, delta: part, finish_reason }] }) + '\n\n');
+      res.end('data: [DONE]\n\n');
+      return;
+    }
     res.writeHead(200, { 'Content-Type': 'text/event-stream' });
     for (const [delta, finish_reason] of [[{ role: 'assistant', content }, null], [{}, 'stop']]) res.write('data: ' + JSON.stringify({ id: 'fixture', object: 'chat.completion.chunk', model: 'toy', choices: [{ index: 0, delta, finish_reason }] }) + '\n\n');
     res.end('data: [DONE]\n\n');
@@ -54,25 +73,17 @@ test('isolated bundle resources, real Pi chat and real graph children', { timeou
     const tools = requests[0].tools.map(tool => tool.function.name);
     for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive', 'codemode_execute', 'codemode_result']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
     assert.equal(tools.includes('mcpScript'), false);
-    const graph = async input => {
-      const result = await run(['piw', '--', 'run', 'workflows/toy/steps.yaml', '--input', input, '--json', '--no-cache'], workspace);
-      return { ...result, summary: JSON.parse(result.out) };
-    };
-    const success = await graph('toy');
-    assert.equal(success.code, 0, success.err + success.out);
-    const receipt = join(success.summary.run_dir, 'receipt.json');
-    assert.equal(JSON.parse(readFileSync(receipt)).count, 1);
-    assert.equal(existsSync(join(success.summary.run_dir, 'chart.png')), true);
-    const rejected = await graph('reject-review');
-    assert.notEqual(rejected.code, 0);
-    assert.equal(existsSync(join(rejected.summary.run_dir, 'receipt.json')), false);
-    const failed = await graph('fail-command');
-    assert.notEqual(failed.code, 0);
-    writeFileSync(join(failed.summary.run_dir, 'allow-render'), '');
-    const resumed = await run(['piw', '--', 'resume', 'workflows/toy/steps.yaml', failed.summary.run_dir.split('/').at(-1), '--json'], workspace);
-    assert.equal(resumed.code, 0, resumed.err + resumed.out);
-    const completed = JSON.parse(readFileSync(join(failed.summary.run_dir, 'receipt.json')));
-    assert.equal(completed.count, 1);
-    assert.ok(requests.length >= 7);
+    assert.ok(!tools.includes('pi_graph'));
+    for (const input of ['toy', 'reject-review', 'fail-command']) {
+      const result = await run(['pi', '--', '-p', '--no-approve', '--model', 'local-test/toy', 'run-toy ' + input], workspace);
+      assert.equal(result.code, 0, result.err + result.out);
+      const directory = join(workspace, 'runs', input);
+      if (input === 'toy') {
+        assert.equal(JSON.parse(readFileSync(join(directory, 'receipt.json'))).count, 1);
+        assert.ok(existsSync(join(directory, 'chart.png')));
+      } else assert.equal(existsSync(join(directory, 'receipt.json')), false);
+    }
+    assert.ok(requests.filter(request => JSON.stringify(request.messages).includes('PI_OPS_TOY_GENERATE')).length >= 3);
+
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
