@@ -42,6 +42,7 @@ See the [integration contract](docs/integration.md) for the complete consumer in
 | Command | Function |
 |---|---|
 | `pi-experiment-ops init` | Creates or completes a workspace while preserving existing configuration. |
+| `pi-experiment-ops config` | Guides workspace provider setup, with optional MCP and skill addition. |
 | `pi-experiment-ops configure` | Writes provider and model settings for Argo or another OpenAI-compatible endpoint. |
 | `pi-experiment-ops doctor` | Checks the Node.js version, bundled resources, Python environment, and Pi CLI. |
 | `pi-experiment-ops pi` | Launches Pi's native terminal interface with this package's extensions and skills. |
@@ -65,8 +66,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.1/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.1
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.0
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -74,8 +75,8 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.1/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.1 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.0/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.0 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
@@ -93,7 +94,7 @@ Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. I
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.5.1.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.6.0.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 
@@ -120,9 +121,28 @@ bash scripts/install.sh "$HOME/pi-experiment-workspace"
 node bin/pi-experiment-ops.mjs pi --workspace "$HOME/pi-experiment-workspace"
 ```
 
+## Guided workspace setup
+
+Run the setup wizard in the workspace you want to configure:
+
+```bash
+pi-experiment-ops config --workspace /path/to/workspace
+```
+
+It creates missing workspace files, guides you through an Argo or OpenAI-compatible provider and model, and offers to save your defaults. It then offers MCP and skill setup; both can be skipped. To add them later, use:
+
+```bash
+pi-experiment-ops config add-mcp --workspace /path/to/workspace
+pi-experiment-ops config add-skill /path/to/skill/dir --workspace /path/to/workspace
+```
+
+MCP setup asks for a name, connection type, address or local command, and authentication details. Skill addition copies a complete folder containing `SKILL.md`; omit its path to enter it at a prompt. Existing skill folders are not overwritten. Without `--workspace`, these commands use the current directory.
+
+You can also ask the agent to add a server or skill. Initialization installs a `workspace-setup` skill with the shared file locations and instructions for direct editing or copying when the CLI is unavailable. See [guided configuration](docs/installation.md#guided-configuration) for details.
+
 ## Workspace skills
 
-Initialization creates `<workspace>/.pi/skills`. Put each skill in `.pi/skills/<name>/SKILL.md`, for example:
+Initialization creates `<workspace>/.pi/skills` and adds the `workspace-setup` skill. Put each additional skill in `.pi/skills/<name>/SKILL.md`, for example:
 
 ```markdown
 ---
@@ -132,7 +152,7 @@ description: Analyze experimental data in this workspace
 Read the data and summarize the findings.
 ```
 
-Restart Pi after adding skills, then use `/skill:analyze-data` to load one explicitly. To expose a skill for automatic discovery by the agent, allow it in `.pi-experiment-ops/agent/pi-permissions.jsonc`. The EAA WebUI uses the same directory.
+Restart Pi after adding skills, then use `/skill:analyze-data` to load one explicitly. New workspaces set `defaultPolicy.skills` to `"allow"` in `.pi-experiment-ops/agent/pi-permissions.jsonc`, so skill descriptions are also available for automatic selection. Existing workspaces retain their permission settings; change `defaultPolicy.skills` to `"allow"` there to adopt the new default, keeping any individual skill rules. Tool and command approvals remain separate.
 
 ## Configuration and operations
 
@@ -149,7 +169,7 @@ Restart Pi after adding skills, then use `/skill:analyze-data` to load one expli
 | `.pi-experiment-ops/agent/pi-permissions.jsonc` | Default permission policies |
 | `.pi/mcp.json` | Empty MCP server configuration |
 | `.pi/agents/reviewer.md` | Toy reviewer definition |
-| `.pi/skills/` | Empty directory for user skills |
+| `.pi/skills/` | Workspace skills, including the initial `workspace-setup/SKILL.md` |
 | `workflows/toy/` | Toy workflow source |
 
 Sessions, logs, databases, and workflow outputs are created when used.
@@ -185,13 +205,7 @@ Launch the terminal interface with that workspace:
 pi-experiment-ops pi --workspace /path/to/workspace
 ```
 
-If eaa-pi is installed, launch its WebUI with the same workspace:
-
-```bash
-eaa-pi serve --workspace /path/to/workspace
-```
-
-Both interfaces read the workspace's `models.json` and `settings.json`. Restart running instances after changing the provider configuration or defaults.
+Pi reads the workspace's `models.json` and `settings.json`. Restart Pi after changing the provider configuration or defaults.
 
 ## Workflows
 

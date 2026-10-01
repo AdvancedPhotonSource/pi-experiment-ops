@@ -34,7 +34,6 @@ test('isolated bundle resources, real Pi chat and real subagent workflows', { ti
   writeFileSync(settings, '{"offline":true,"packages":[],"theme":"light"}');
   ops.initialize(workspace);
   assert.equal(JSON.parse(readFileSync(settings)).theme, 'light');
-  writeFileSync(join(workspace, '.pi-experiment-ops/agent/pi-permissions.jsonc'), JSON.stringify({ defaultPolicy: { tools: 'ask', bash: 'ask', mcp: 'ask', skills: 'allow', special: 'ask' } }));
   const requests = [];
   const server = createServer(async (req, res) => {
     const chunks = [];
@@ -74,6 +73,7 @@ test('isolated bundle resources, real Pi chat and real subagent workflows', { ti
     assert.equal(chat.code, 0, chat.err);
     assert.match(chat.out, /Standalone Pi bundle works/);
     assert.match(JSON.stringify(requests[0].messages), /Check the workspace skill fixture/);
+    assert.match(JSON.stringify(requests[0].messages), /workspace-setup/);
     const skill = await run(['pi', '--', '-p', '--no-approve', '--model', 'local-test/toy', '/skill:workspace-check'], workspace);
     assert.equal(skill.code, 0, skill.err);
     assert.match(JSON.stringify(requests.at(-1).messages), /WORKSPACE_SKILL_INSTRUCTIONS/);

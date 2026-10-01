@@ -19,7 +19,7 @@ run('npm', ['install', '--prefix', target, '--omit=dev', '--legacy-peer-deps', '
 const root = join(target, 'node_modules/pi-experiment-ops');
 assert.ok(existsSync(join(root, 'requirements.lock')));
 for (let i = 0; i < 2; i++) run('bash', [join(root, 'scripts/install.sh'), join(target, 'workspace')]);
-for (const name of ['bundle', 'sdk', 'codemode', 'permissions']) cpSync(join(source, `tests/${name}.test.mjs`), join(target, `${name}.test.mjs`));
+for (const name of ['bundle', 'sdk', 'codemode', 'permissions', 'config']) cpSync(join(source, `tests/${name}.test.mjs`), join(target, `${name}.test.mjs`));
 cpSync(join(source, 'tests/fixtures'), join(target, 'fixtures'), { recursive: true });
-console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs'), join(target, 'sdk.test.mjs'), join(target, 'codemode.test.mjs'), join(target, 'permissions.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
+console.log(run(process.execPath, ['--test', join(target, 'bundle.test.mjs'), join(target, 'sdk.test.mjs'), join(target, 'codemode.test.mjs'), join(target, 'permissions.test.mjs'), join(target, 'config.test.mjs')], target, { ...process.env, PI_OPS_PACKAGE_ROOT: root }));
 console.log(`Standalone tarball installation and real Pi/subagents passed in ${target}`);

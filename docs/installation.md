@@ -67,3 +67,16 @@ Rerun the bootstrap with a new `--version` and the same workspace. Repeating a r
 To uninstall a release installation, remove the generated `BIN_DIR/pi-experiment-ops` launcher and `PREFIX`. A developer installation also owns dependencies and `.runtime` inside its checkout; remove those or the checkout when no longer needed. Workspace credentials, sessions, workflows, and artifacts are separate; retain, archive, or delete the workspace according to your needs. Shared pre-existing Node/uv installations and shell startup files are preserved.
 
 See also the official [uv installer options](https://docs.astral.sh/uv/reference/installer/) and [Node download verification](https://github.com/nodejs/node#verifying-binaries).
+
+## Guided configuration
+
+`pi-experiment-ops config --workspace DIR` initializes missing workspace files and prompts for a provider, model, and default selection. Provider setup supports Argo and OpenAI-compatible chat services. API keys can be referenced by an environment variable name; set its value in the terminal before launching Pi. The existing noninteractive `pi-experiment-ops configure --preset ...` command remains available for installation scripts.
+
+The wizard offers two optional steps, also available separately:
+
+- `pi-experiment-ops config add-mcp --workspace DIR`: choose a unique name and `http`, `sse`, or `stdio` transport. Web servers need a URL and may use automatic authentication, no authentication, a bearer token referenced by environment variable, or OAuth. You can add headers, using `$env:NAME` for environment values. Local programs accept a command, arguments entered one at a time without shell quotes, a working directory, and extra environment values; they also inherit the launching terminal's environment. Relative directory paths resolve from the directory where you run setup. Connections are saved in `.pi/mcp.json`; the server starts or connects when you next launch Pi. For OAuth, use `/mcp-auth SERVER_NAME` in the TUI to complete authentication.
+- `pi-experiment-ops config add-skill [DIRECTORY] --workspace DIR`: copy the complete folder into `.pi/skills/<folder-name>`. The folder must contain `SKILL.md`. If you omit the directory, setup prompts for it. Existing destination folders are preserved.
+
+Without `--workspace`, configuration uses the current directory. Settings are saved after each completed step. Press Ctrl+C to leave setup; an unfinished step is not saved. Stop and restart the agent to apply new providers, servers, or skills.
+
+Initialization adds `.pi/skills/workspace-setup/SKILL.md`, which teaches the agent to make these changes directly when a user requests them, even without a CLI on PATH. Reinitialization preserves local edits to this skill and existing permission files. New workspaces use `defaultPolicy.skills: "allow"`; for an older workspace, update that field in `.pi-experiment-ops/agent/pi-permissions.jsonc` if you want automatic skill discovery. Keep individual rules and other permission categories unchanged.

@@ -1,6 +1,6 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "A standalone Pi distribution for experiment operations, MCP instruments and subagent workflows",
   "type": "module",
   "engines": {
@@ -35,6 +35,10 @@
     "./sdk": {
       "types": "./lib/sdk.d.ts",
       "default": "./lib/sdk.mjs"
+    },
+    "./config": {
+      "types": "./lib/config.d.ts",
+      "default": "./lib/config.mjs"
     }
   },
   "keywords": [
