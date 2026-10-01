@@ -65,8 +65,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.0
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.1/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.1
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -74,19 +74,26 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.0/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.0 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.5.1/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.5.1 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
 The Argo preset uses `https://apps.inside.anl.gov/argoapi/v1`. Choose an exact model ID from your endpoint's `/models` response. Setup configures Pi's default provider/model inherited by the toy workflow. It sends no inference request. Generic OpenAI-compatible endpoints are supported with `--preset openai --base-url URL --model ID --api-key-env VARIABLE_NAME`.
+
+The installer creates and configures `~/pi-experiment-workspace` by default. Pass `--workspace /absolute/path` to the installer to choose another workspace. Preset settings are saved within that workspace:
+
+- `.pi-experiment-ops/agent/models.json` stores the provider's base URL and model definitions. For the Argo example above, it also stores the supplied username.
+- `.pi-experiment-ops/agent/settings.json` selects the default provider and model (`argo` and `GPT-4.1` in this example).
+
+The generated `~/.local/bin/pi-experiment-ops` launcher remembers this workspace and uses it from any working directory. Pass `--workspace DIR` to the launcher to select another workspace, which has its own provider configuration. Presets configure the selected workspace; there is no shared global provider configuration.
 
 Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. If desired, add `export PATH="$HOME/.local/bin:$PATH"` to your shell configuration. The installer does not edit shell startup files. For other providers, use Pi's `/login` or configure workspace provider files.
 
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.5.0.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.5.1.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 
@@ -158,6 +165,33 @@ Sessions, logs, databases, and workflow outputs are created when used.
 - Instrument servers must serialize conflicting physical operations until completion, including operations returning asynchronous job IDs. Sequential agent tools do not serialize separate agents.
 
 Full MCP server log/progress content is not exposed through the inspected public interfaces. Server status and tool execution remain available through the upstream adapter.
+
+### Selecting a workspace provider and model
+
+After adding a provider to `<workspace>/.pi-experiment-ops/agent/models.json`, select it by setting `defaultProvider` and `defaultModel` in the same directory's `settings.json`. Use the provider key and exact model ID from `models.json`. For example, for provider `argo` and model `GPT-4.1`, merge these fields into the existing settings, preserving other fields:
+
+```json
+{
+  "defaultProvider": "argo",
+  "defaultModel": "GPT-4.1"
+}
+```
+
+The installer presets and `pi-experiment-ops configure` set these defaults automatically.
+
+Launch the terminal interface with that workspace:
+
+```bash
+pi-experiment-ops pi --workspace /path/to/workspace
+```
+
+If eaa-pi is installed, launch its WebUI with the same workspace:
+
+```bash
+eaa-pi serve --workspace /path/to/workspace
+```
+
+Both interfaces read the workspace's `models.json` and `settings.json`. Restart running instances after changing the provider configuration or defaults.
 
 ## Workflows
 
