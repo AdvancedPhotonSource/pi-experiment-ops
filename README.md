@@ -76,8 +76,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.1/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.1
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.2/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.2
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -85,8 +85,8 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.1/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.1 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.2/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.2 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
@@ -104,7 +104,7 @@ Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. I
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.6.1.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.6.2.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 

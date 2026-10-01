@@ -4,6 +4,8 @@ Notable changes to pi-experiment-ops are documented here.
 
 ## 0.6.2
 
+- Include the expanded Python analysis and visualization dependencies introduced in 0.6.1.
+
 - Bundle pi-condense 2.11.2 with a four-image request budget for new and existing workspaces, preserving explicit user settings and original session history.
 - Expose the `condense` extension replacement key.
 
