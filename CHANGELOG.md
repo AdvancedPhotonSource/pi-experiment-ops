@@ -2,6 +2,11 @@
 
 Notable changes to pi-experiment-ops are documented here.
 
+## 0.5.1
+
+- Load workspace skills from `.pi/skills` alongside bundled skills.
+- Initialize the skill directory and empty provider and credential configuration while preserving existing files.
+
 ## 0.5.0
 
 - Replace pi-graph with pi-subagents workflow resources and a JavaScript toy workflow.

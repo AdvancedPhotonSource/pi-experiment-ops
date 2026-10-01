@@ -2,7 +2,7 @@
 import { configureProvider } from '../lib/provider.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { initialize, configureEnvironment, resources, piCli } from '../lib/index.mjs';
 const args = process.argv.slice(2);
 const command = args.shift() || 'help';
@@ -36,6 +36,7 @@ if (['help', '--help'].includes(command)) {
   } else if (command === 'pi') {
     const forwarded = args[0] === '--' ? args.slice(1) : args;
     const paths = resources();
+    paths.skills.push(join(workspace, '.pi/skills'));
     const child = spawn(process.execPath, [piCli, '--no-extensions', '--no-skills', '--no-context-files', ...paths.extensions.flatMap(path => ['-e', path]), ...paths.skills.flatMap(path => ['--skill', path]), ...forwarded], { cwd: workspace, stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => child.kill(signal));
     child.on('error', error => { console.error(error.message); process.exitCode = 1; });

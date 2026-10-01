@@ -1,12 +1,12 @@
 {
   "name": "pi-experiment-ops",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "pi-experiment-ops",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "bundleDependencies": [
         "pi-mcp-adapter",
         "pi-subagents",

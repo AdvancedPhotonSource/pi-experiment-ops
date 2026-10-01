@@ -21,7 +21,7 @@ This package assembles a pinned, frontend-independent Pi distribution for experi
 | [`@ian-pascoe/pi-codemode`](https://pi.dev/packages/%40ian-pascoe/pi-codemode) | Composes registered Pi and MCP tools in persistent TypeScript cells, including background execution. |
 | [`pi-permission-system`](https://pi.dev/packages/pi-permission-system) | Applies allow, session approval, ask, and deny policies to Pi and MCP tool calls. |
 
-The launcher also loads the skills shipped with the bundled extensions.
+The launcher loads bundled skills and workspace skills from `.pi/skills`.
 
 ### APIs for downstream applications
 
@@ -113,7 +113,39 @@ bash scripts/install.sh "$HOME/pi-experiment-workspace"
 node bin/pi-experiment-ops.mjs pi --workspace "$HOME/pi-experiment-workspace"
 ```
 
+## Workspace skills
+
+Initialization creates `<workspace>/.pi/skills`. Put each skill in `.pi/skills/<name>/SKILL.md`, for example:
+
+```markdown
+---
+name: analyze-data
+description: Analyze experimental data in this workspace
+---
+Read the data and summarize the findings.
+```
+
+Restart Pi after adding skills, then use `/skill:analyze-data` to load one explicitly. To expose a skill for automatic discovery by the agent, allow it in `.pi-experiment-ops/agent/pi-permissions.jsonc`. The EAA WebUI uses the same directory.
+
 ## Configuration and operations
+
+`pi-experiment-ops init --workspace DIR` creates the configuration files below and preserves existing contents when rerun. Relative paths are within the workspace.
+
+| Path | Initial contents |
+|---|---|
+| `.pi-experiment-ops/agent/models.json` | `{ "providers": {} }`; add custom providers and models here |
+| `.pi-experiment-ops/agent/auth.json` | `{}`; Pi stores provider credentials here |
+| `.pi-experiment-ops/agent/settings.json` | Offline catalog, package, and theme defaults |
+| `.pi-experiment-ops/agent/modes.config.json` | Build/plan mode defaults |
+| `.pi-experiment-ops/agent/interactive-shell.json` | Shell query interval |
+| `.pi-experiment-ops/agent/permission-system.json` | Permission extension settings |
+| `.pi-experiment-ops/agent/pi-permissions.jsonc` | Default permission policies |
+| `.pi/mcp.json` | Empty MCP server configuration |
+| `.pi/agents/reviewer.md` | Toy reviewer definition |
+| `.pi/skills/` | Empty directory for user skills |
+| `workflows/toy/` | Toy workflow source |
+
+Sessions, logs, databases, and workflow outputs are created when used.
 
 - MCP configuration is `<workspace>/.pi/mcp.json`, with an `mcpServers` object. The MCP adapter accepts stdio commands or HTTP URLs. Host configuration discovery is disabled; tools are exposed individually by default. Keep secrets in environment variables or private workspace configuration.
 - Provider configuration, credentials, modes, shell settings, and Pi sessions live under `<workspace>/.pi-experiment-ops/agent`. Startup preserves existing files. Choose a provider/model with Pi flags or Pi settings.

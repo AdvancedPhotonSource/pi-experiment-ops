@@ -19,6 +19,9 @@ const run = (args, workspace) => new Promise((resolve, reject) => {
 test('isolated bundle resources, real Pi chat and real subagent workflows', { timeout: 180000 }, async () => {
   const workspace = mkdtempSync(join(tmpdir(), 'pi-ops-test-'));
   ops.initialize(workspace);
+  const skillDir = join(workspace, '.pi/skills/workspace-check');
+  mkdirSync(skillDir);
+  writeFileSync(join(skillDir, 'SKILL.md'), '---\nname: workspace-check\ndescription: Check the workspace skill fixture\n---\nWORKSPACE_SKILL_INSTRUCTIONS\n');
   assert.equal(JSON.parse(readFileSync(join(workspace, '.pi/mcp.json'))).settings.scriptMode, false);
   assert.equal(JSON.parse(readFileSync(join(workspace, '.pi-experiment-ops/agent/permission-system.json'))).yoloMode, false);
   assert.equal(JSON.parse(readFileSync(join(workspace, '.pi-experiment-ops/agent/pi-permissions.jsonc'))).defaultPolicy.tools, 'ask');
@@ -31,6 +34,7 @@ test('isolated bundle resources, real Pi chat and real subagent workflows', { ti
   writeFileSync(settings, '{"offline":true,"packages":[],"theme":"light"}');
   ops.initialize(workspace);
   assert.equal(JSON.parse(readFileSync(settings)).theme, 'light');
+  writeFileSync(join(workspace, '.pi-experiment-ops/agent/pi-permissions.jsonc'), JSON.stringify({ defaultPolicy: { tools: 'ask', bash: 'ask', mcp: 'ask', skills: 'allow', special: 'ask' } }));
   const requests = [];
   const server = createServer(async (req, res) => {
     const chunks = [];
@@ -69,6 +73,10 @@ test('isolated bundle resources, real Pi chat and real subagent workflows', { ti
     const chat = await run(['pi', '--', '-p', '--no-approve', '--model', 'local-test/toy', 'hello'], workspace);
     assert.equal(chat.code, 0, chat.err);
     assert.match(chat.out, /Standalone Pi bundle works/);
+    assert.match(JSON.stringify(requests[0].messages), /Check the workspace skill fixture/);
+    const skill = await run(['pi', '--', '-p', '--no-approve', '--model', 'local-test/toy', '/skill:workspace-check'], workspace);
+    assert.equal(skill.code, 0, skill.err);
+    assert.match(JSON.stringify(requests.at(-1).messages), /WORKSPACE_SKILL_INSTRUCTIONS/);
     assert.doesNotMatch(chat.err, /Failed to load extension|Extension errors|dispose is not a function/i);
     const tools = requests[0].tools.map(tool => tool.function.name);
     for (const name of ['subagent', 'process', 'interactive_shell', 'search_archive', 'codemode_execute', 'codemode_result']) assert.ok(tools.includes(name), `Missing extension tool ${name}`);
