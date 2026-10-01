@@ -126,7 +126,7 @@ test("full wizard offers MCP and skill addition and preserves the existing provi
   const { root, workspace, run } = fixture(t);
   initialize(workspace);
   const settingsPath = join(agentDir(workspace), "settings.json");
-  writeJson(settingsPath, { defaultProvider: "saved", defaultModel: "saved-model" });
+  writeJson(settingsPath, { defaultProvider: "saved", defaultModel: "saved-model", contextPrune: { maxImagesPerRequest: 8 } });
   const before = readFileSync(settingsPath, "utf8");
   const skill = join(root, "analysis");
   mkdirSync(skill);

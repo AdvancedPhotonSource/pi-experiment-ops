@@ -8,5 +8,6 @@
   "archive": "extensions/archive.ts",
   "workflows": "extensions/workflows.ts",
   "codemode": "node_modules/@ian-pascoe/pi-codemode/src/index.ts",
-  "permissions": "extensions/permissions.ts"
+  "permissions": "extensions/permissions.ts",
+  "condense": "node_modules/pi-condense/index.ts"
 }

@@ -21,6 +21,8 @@ This package assembles a pinned, frontend-independent Pi distribution for experi
 | [`@ian-pascoe/pi-codemode`](https://pi.dev/packages/%40ian-pascoe/pi-codemode) | Composes registered Pi and MCP tools in persistent TypeScript cells, including background execution. |
 | [`pi-permission-system`](https://pi.dev/packages/pi-permission-system) | Applies allow, session approval, ask, and deny policies to Pi and MCP tool calls. |
 
+| [`pi-condense`](https://github.com/jjuraszek/pi-condense) | Caps images sent to the model and optionally summarizes older tool output. |
+
 The launcher loads bundled skills and workspace skills from `.pi/skills`.
 
 ### APIs for downstream applications
@@ -56,6 +58,14 @@ Each command accepts `--workspace DIR`; `pi` passes arguments following `--` to 
 | Release and source installers | Provision the locked Node and Python dependencies without a global npm installation or administrator access. |
 | Isolated workspace state | Keeps configuration, credentials, sessions, temporary files, and workflow state outside the installed package. |
 | Toy workflow | Installs a generator → reviewer → renderer workflow for validating execution, review checks, command failures, and fresh retries without physical instruments. |
+
+## Image context budget
+
+Pi's automatic compaction manages the overall token budget. The bundled pi-condense extension additionally caps each request at four recent images, covering both attachments and tool results. Above the cap it replaces the oldest images with text notes in batches of two, retaining the latest three or four images while preserving the original transcript and UI history. This also applies to resumed sessions.
+
+`initialize()` supplies `contextPrune.maxImagesPerRequest: 4` in the agent directory's `settings.json` for new and existing workspaces, preserving any explicit value and other settings. Change this positive integer and restart the session to adjust the budget. An explicit `null` selects pi-condense's provider-specific defaults. Images removed from a request must be re-read or re-attached if needed again.
+
+LLM-based tool-output summarization remains off by default; `/pruner on` enables it separately. Image capping runs in either mode and makes no additional model calls.
 
 ## Installation
 
