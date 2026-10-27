@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 const PACKAGE_ROOT = process.env.PI_OPS_PACKAGE_ROOT || new URL('..', import.meta.url).pathname;
@@ -103,23 +103,89 @@ test("skill addition copies the complete folder from an argument or prompt witho
   mkdirSync(join(skill, "scripts"), { recursive: true });
   writeFileSync(join(skill, "SKILL.md"), "---\nname: my-skill\ndescription: Test skill\n---\nUse the script.\n");
   writeFileSync(join(skill, "scripts/analyze.py"), "print('test')\n");
-  passed(run(["add-skill", skill]));
+  const result = run(["add-skill", skill], [""]);
+  passed(result);
+  assert.match(result.stdout, /\(copy\/link\) \[copy\]/);
   const installed = join(workspace, ".pi/skills/my skill");
+  assert.equal(lstatSync(installed).isSymbolicLink(), false);
   assert.equal(readFileSync(join(installed, "scripts/analyze.py"), "utf8"), "print('test')\n");
   writeFileSync(join(skill, "scripts/analyze.py"), "changed\n");
-  const duplicate = run(["add-skill", skill]);
+  const duplicate = run(["add-skill", skill], ["copy"]);
   assert.equal(duplicate.status, 1);
   assert.match(duplicate.stderr, /already exists/);
   assert.equal(readFileSync(join(installed, "scripts/analyze.py"), "utf8"), "print('test')\n");
+  assert.equal(run(["add-skill", skill, "--link"]).status, 1);
+  assert.equal(lstatSync(installed).isSymbolicLink(), false);
   rmSync(installed, { recursive: true });
-  passed(run(["add-skill"], [skill]));
+  const prompted = run(["add-skill"], [skill, "invalid", "copy"]);
+  passed(prompted);
+  assert.match(prompted.stdout, /Choose copy or link/);
   assert.equal(readFileSync(join(installed, "scripts/analyze.py"), "utf8"), "changed\n");
   const invalid = join(root, "invalid");
   mkdirSync(invalid);
-  const missingSkill = run(["add-skill", invalid]);
+  const missingSkill = run(["add-skill", invalid], [""]);
   assert.equal(missingSkill.status, 1);
   assert.match(missingSkill.stderr, /SKILL.md/);
   assert.equal(existsSync(join(workspace, ".pi/skills/invalid")), false);
+});
+
+for (const selection of ["prompt", "flag", "flag-first", "prompt-directory"]) {
+  test(`skill addition creates a live symbolic link using ${selection}`, t => {
+    const { root, workspace, run } = fixture(t);
+    const skill = join(root, "linked skill");
+    mkdirSync(join(skill, "scripts"), { recursive: true });
+    writeFileSync(join(skill, "SKILL.md"), "---\nname: linked-skill\ndescription: Linked skill\n---\nUse the script.\n");
+    writeFileSync(join(skill, "scripts/analyze.py"), "original\n");
+    const args = selection === "prompt-directory" ? ["add-skill", "--link"]
+      : selection === "flag-first" ? ["add-skill", "--link", "linked skill"]
+      : ["add-skill", "linked skill", ...(selection === "flag" ? ["--link"] : [])];
+    const answers = selection === "prompt" ? ["link"] : selection === "prompt-directory" ? [skill] : [];
+    const result = run(args, answers, { cwd: root });
+    passed(result);
+    if (selection !== "prompt") assert.doesNotMatch(result.stdout, /copy\/link/);
+    const installed = join(workspace, ".pi/skills/linked skill");
+    assert.ok(lstatSync(installed).isSymbolicLink());
+    assert.equal(realpathSync(installed), realpathSync(skill));
+    writeFileSync(join(skill, "scripts/analyze.py"), "changed\n");
+    assert.equal(readFileSync(join(installed, "scripts/analyze.py"), "utf8"), "changed\n");
+    const duplicate = run(["add-skill", skill, "--link"]);
+    assert.equal(duplicate.status, 1);
+    assert.match(duplicate.stderr, /already exists/);
+    assert.equal(realpathSync(installed), realpathSync(skill));
+    rmSync(skill, { recursive: true });
+    const replacement = join(root, "replacement", "linked skill");
+    mkdirSync(replacement, { recursive: true });
+    writeFileSync(join(replacement, "SKILL.md"), "Replacement source");
+    const dangling = run(["add-skill", replacement, "--link"]);
+    assert.equal(dangling.status, 1);
+    assert.match(dangling.stderr, /already exists/);
+    assert.ok(lstatSync(installed).isSymbolicLink());
+  });
+}
+
+test("skill linking validates the source and rejects recursive workspace links", t => {
+  const { root, workspace, run } = fixture(t);
+  const invalid = join(root, "invalid");
+  mkdirSync(invalid);
+  const missingSkill = run(["add-skill", invalid, "--link"]);
+  assert.equal(missingSkill.status, 1);
+  assert.match(missingSkill.stderr, /SKILL.md/);
+  assert.equal(existsSync(join(workspace, ".pi/skills/invalid")), false);
+  writeFileSync(join(root, "SKILL.md"), "Recursive source");
+  const recursive = run(["add-skill", root, "--link"]);
+  assert.equal(recursive.status, 1);
+  assert.match(recursive.stderr, /cannot contain/);
+});
+
+test("unfinished skill selection leaves the destination uninstalled", t => {
+  const { root, workspace, run } = fixture(t);
+  const skill = join(root, "cancelled");
+  mkdirSync(skill);
+  writeFileSync(join(skill, "SKILL.md"), "A skill");
+  const result = run(["add-skill", skill]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /input ended/);
+  assert.equal(existsSync(join(workspace, ".pi/skills/cancelled")), false);
 });
 
 test("full wizard offers MCP and skill addition and preserves the existing provider when skipped", t => {
@@ -131,7 +197,7 @@ test("full wizard offers MCP and skill addition and preserves the existing provi
   const skill = join(root, "analysis");
   mkdirSync(skill);
   writeFileSync(join(skill, "SKILL.md"), "---\nname: analysis\ndescription: Analyze data\n---\nAnalyze it.\n");
-  passed(run([], ["", "y", "server", "", "http://localhost:9000/mcp", "none", "", "y", skill]));
+  passed(run([], ["", "y", "server", "", "http://localhost:9000/mcp", "none", "", "y", skill, ""]));
   assert.equal(readFileSync(settingsPath, "utf8"), before);
   assert.equal(readJson(join(workspace, ".pi/mcp.json")).mcpServers.server.auth, false);
   assert.ok(existsSync(join(workspace, ".pi/skills/analysis/SKILL.md")));
@@ -152,7 +218,8 @@ test("config help and invalid subcommands do not create a workspace; omitted wor
   const { root, workspace, run } = fixture(t);
   passed(run(["--help"]));
   assert.equal(existsSync(workspace), false);
-  assert.equal(run(["not-a-command"]).status, 1);
+  for (const args of [["not-a-command"], ["--link"], ["add-mcp", "--link"], ["add-skill", "--unknown"], ["add-skill", "one", "two", "--link"]])
+    assert.equal(run(args).status, 1);
   assert.equal(existsSync(workspace), false);
   const result = spawnSync(process.execPath, [join(PACKAGE_ROOT, "bin/pi-experiment-ops.mjs"), "config"],
     { cwd: root, input: "n\nn\nn\n", encoding: "utf8", timeout: 15000 });

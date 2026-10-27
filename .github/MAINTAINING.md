@@ -25,7 +25,7 @@ The tests use a local streaming model endpoint, actual Pi extensions, and real p
 
 1. Match the version in `package.json`, both root version fields in `npm-shrinkwrap.json`, and the default `version` in `install.sh`. Update the README's versioned installation examples.
 2. Commit and push the source, lockfiles, launcher scripts (including `bin/pi`), and [release workflow](workflows/release.yml).
-3. Publish a GitHub Release at that commit with the matching tag, such as `v0.6.2`.
+3. Publish a GitHub Release at that commit with the matching tag, such as `v0.6.3`.
 4. Wait for **Actions → Build release package** to pass and attach the `.tgz` and `.tgz.sha256` assets. The curl installer becomes usable when both assets are available.
 
 The workflow runs on `release: published`, including published prereleases. It validates versions, provisions dependencies, runs the checks above, and uploads assets with the automatic `GITHUB_TOKEN`. Actions policy must allow the pinned actions and `contents: write`. No npm publishing token or model credentials are required. Saving a draft or pushing a tag alone does not trigger the workflow.
@@ -34,7 +34,7 @@ The upload step sends each asset separately and retries failures up to five time
 
 ```bash
 npm pack
-sha256sum pi-experiment-ops-0.6.2.tgz > pi-experiment-ops-0.6.2.tgz.sha256
+sha256sum pi-experiment-ops-0.6.3.tgz > pi-experiment-ops-0.6.3.tgz.sha256
 ```
 
 Keep generated tarballs, checksums, dependency directories, and Python environments out of Git. Retain previous release assets for rollback.

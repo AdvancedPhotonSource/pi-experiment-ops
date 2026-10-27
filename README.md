@@ -76,8 +76,8 @@ Users install under `~/.local/share/pi-experiment-ops`, with a launcher in `~/.l
 Install from the [AdvancedPhotonSource/pi-experiment-ops](https://github.com/AdvancedPhotonSource/pi-experiment-ops) GitHub release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.2/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.2
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.3/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.3
 ```
 
 Available versions and downloads are listed on the [releases page](https://github.com/AdvancedPhotonSource/pi-experiment-ops/releases).
@@ -85,8 +85,8 @@ Available versions and downloads are listed on the [releases page](https://githu
 For Argo, use the preset on the same installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.2/install.sh | \
-  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.2 \
+curl -fsSL https://raw.githubusercontent.com/AdvancedPhotonSource/pi-experiment-ops/v0.6.3/install.sh | \
+  sh -s -- --repo AdvancedPhotonSource/pi-experiment-ops --version 0.6.3 \
     --preset argo --argo-user YOUR_ARGONNE_USERNAME --model GPT-4.1
 ```
 
@@ -104,7 +104,7 @@ Run `~/.local/bin/pi-experiment-ops` to launch Pi in the configured workspace. I
 If you already have a downloaded release tarball and a copy of `install.sh`, install locally:
 
 ```bash
-sh install.sh --archive /path/to/pi-experiment-ops-0.6.2.tgz \
+sh install.sh --archive /path/to/pi-experiment-ops-0.6.3.tgz \
   --workspace "$HOME/pi-experiment-workspace"
 ```
 
@@ -146,7 +146,7 @@ pi-experiment-ops config add-mcp --workspace /path/to/workspace
 pi-experiment-ops config add-skill /path/to/skill/dir --workspace /path/to/workspace
 ```
 
-MCP setup asks for a name, connection type, address or local command, and authentication details. Skill addition copies a complete folder containing `SKILL.md`; omit its path to enter it at a prompt. Existing skill folders are not overwritten. Without `--workspace`, these commands use the current directory.
+MCP setup asks for a name, connection type, address or local command, and authentication details. Skill addition asks whether to copy a complete folder containing `SKILL.md` or create a symbolic link to it; press Enter to copy. Pass `--link` to select linking without the choice prompt. Omit the folder path to enter it at a prompt. Links reflect source edits and require the source folder to remain available. Existing skill folders are not overwritten. Without `--workspace`, these commands use the current directory.
 
 You can also ask the agent to add a server or skill. Initialization installs a `workspace-setup` skill with the shared file locations and instructions for direct editing or copying when the CLI is unavailable. See [guided configuration](docs/installation.md#guided-configuration) for details.
 

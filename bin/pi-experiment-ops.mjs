@@ -7,7 +7,7 @@ import { initialize, configureEnvironment, resources, piCli } from '../lib/index
 const args = process.argv.slice(2);
 const command = args.shift() || 'help';
 if (['help', '--help'].includes(command)) {
-  console.log('pi-experiment-ops init|config|doctor|configure|pi [--workspace DIR] [-- upstream arguments]\npi-experiment-ops config add-mcp [--workspace DIR]\npi-experiment-ops config add-skill [SKILL_DIRECTORY] [--workspace DIR]');
+  console.log('pi-experiment-ops init|config|doctor|configure|pi [--workspace DIR] [-- upstream arguments]\npi-experiment-ops config add-mcp [--workspace DIR]\npi-experiment-ops config add-skill [SKILL_DIRECTORY] [--link] [--workspace DIR]');
 } else {
   const separator = args.indexOf('--');
   const index = args.indexOf('--workspace');

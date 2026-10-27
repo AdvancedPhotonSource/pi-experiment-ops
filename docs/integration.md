@@ -45,6 +45,6 @@ import { configure } from 'pi-experiment-ops/config';
 await configure(workspace, args);
 ```
 
-`args` is empty for full setup, `['add-mcp']` for MCP setup, or `['add-skill', sourceDirectory]` to copy a skill. Omit the source directory to prompt for it. Help and argument validation run before workspace initialization.
+`args` is empty for full setup, `['add-mcp']` for MCP setup, or `['add-skill', sourceDirectory]` to choose whether to copy or symbolically link a skill (default: copy). Append `'--link'` to select linking without the choice prompt. Omit the source directory to prompt for it. Help and argument validation run before workspace initialization.
 
 An optional third argument accepts `commandName` for user-facing help, `initializeWorkspace` to supply a host initializer, and `configureHost(workspace, prompts)` for host-specific settings between provider setup and the optional MCP/skill steps. The prompt interface exposes `required(label, fallback, validate)`, where validation returns an error message or `undefined`. The standalone CLI supplies no host callback and writes no frontend configuration. Applications own their additional settings; provider, MCP, and skill setup remain owned by this package.

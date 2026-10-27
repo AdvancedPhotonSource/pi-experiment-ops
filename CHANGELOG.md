@@ -2,6 +2,10 @@
 
 Notable changes to pi-experiment-ops are documented here.
 
+## 0.6.3
+
+- Ask whether to copy or symbolically link an added skill, defaulting to copy; support `config add-skill --link` for direct linking.
+
 ## 0.6.2
 
 - Include the expanded Python analysis and visualization dependencies introduced in 0.6.1.

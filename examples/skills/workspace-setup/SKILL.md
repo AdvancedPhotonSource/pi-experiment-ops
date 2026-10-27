@@ -55,7 +55,7 @@ Arguments are literal strings, not shell command fragments. Set an absolute `cwd
 
 ## Add a skill
 
-Accept a local folder containing `SKILL.md` and any supporting files. Copy the entire folder to `.pi/skills/<folder-name>/`, preserving the source and existing installed skills. If that destination exists, resolve whether the user wants a replacement or another name before overwriting it.
+Accept a local folder containing `SKILL.md` and any supporting files. Ask whether to copy the entire folder or create a symbolic link at `.pi/skills/<folder-name>/`, defaulting to copy. Preserve the source and existing installed skills. Links reflect source edits and require the source folder to remain available. If that destination exists, resolve whether the user wants a replacement or another name before overwriting it.
 
 When available, use the CLI with the explicit workspace:
 
@@ -63,9 +63,9 @@ When available, use the CLI with the explicit workspace:
 pi-experiment-ops config add-skill /path/to/skill --workspace /path/to/workspace
 ```
 
-If the command is not on PATH, create the destination's parent directory and copy the folder using filesystem tools. No JSON registration is needed. Keep scripts and other supporting files beside `SKILL.md` as supplied. Read the skill's frontmatter to report its invocation name, which can differ from its folder name.
+The CLI prompts for copy or link; pass `--link` to select linking directly. If the command is not on PATH, create the destination's parent directory and copy the folder or create an absolute symbolic link according to the user's choice using filesystem tools. No JSON registration is needed. Keep scripts and other supporting files beside `SKILL.md` as supplied. Read the skill's frontmatter to report its invocation name, which can differ from its folder name.
 
-After copying, tell the user to restart the agent and use `/skill:name` for explicit invocation. New workspaces default to `defaultPolicy.skills: "allow"`, making skill descriptions available for automatic selection. Existing workspaces retain their permission file. If a skill is hidden, inspect `.pi-experiment-ops/agent/pi-permissions.jsonc` and explain the applicable rule; change permissions only within the user's requested scope. Allowing skill instructions does not override permissions on the tools those instructions use.
+After adding the skill, tell the user to restart the agent and use `/skill:name` for explicit invocation. New workspaces default to `defaultPolicy.skills: "allow"`, making skill descriptions available for automatic selection. Existing workspaces retain their permission file. If a skill is hidden, inspect `.pi-experiment-ops/agent/pi-permissions.jsonc` and explain the applicable rule; change permissions only within the user's requested scope. Allowing skill instructions does not override permissions on the tools those instructions use.
 
 ## Providers and defaults
 
